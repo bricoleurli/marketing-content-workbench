@@ -301,6 +301,8 @@
         border: 0;
         background: #0d0e10;
       }
+      /* Author display:block overrides the browser default for [hidden]. */
+      .workbench-host-frame[hidden] { display: none !important; }
       .workbench-host-nav :focus-visible { outline: 2px solid #f05252; outline-offset: 2px; }
       @media (max-width: 720px) {
         .workbench-host { grid-template-columns: 64px minmax(0, 1fr); }
