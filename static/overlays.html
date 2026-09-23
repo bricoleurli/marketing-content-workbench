@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0d0e10" />
+    <title>叠加模板 · 素材库</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css?v=dark-workbench3" />
+  </head>
+  <body class="overlays-page">
+    <svg class="overlay-ripple-defs" width="0" height="0" aria-hidden="true" focusable="false">
+      <filter id="montageRipple" x="-12%" y="-12%" width="124%" height="124%" color-interpolation-filters="sRGB">
+        <feTurbulence id="montageRippleNoise" type="fractalNoise" baseFrequency="0.002 0.045" numOctaves="1" seed="2" result="wave" />
+        <feDisplacementMap id="montageRippleMap" in="SourceGraphic" in2="wave" scale="18" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </svg>
+    <div class="app-shell overlays-shell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div>
+            <strong>素材库</strong>
+            <span>叠加模板</span>
+          </div>
+        </div>
+        <nav class="page-nav" aria-label="工作台页面">
+          <a href="/library">素材库</a>
+          <a href="/topics">选题库</a>
+          <a href="/voiceover">口播配音</a>
+          <a href="/clips">事件镜头</a>
+          <a class="is-active" href="/overlays" aria-current="page">叠加模板</a>
+        </nav>
+        <div class="topbar-actions">
+          <span class="connection-status" id="overlayStatus">
+            <i></i><span>读取叠加模板</span>
+          </span>
+        </div>
+      </header>
+
+      <aside class="voice-sidebar overlays-list">
+        <nav class="app-sidebar-nav" aria-label="工作台功能">
+          <a href="/library"><i data-lucide="library"></i><span>素材库</span></a>
+          <a href="/topics"><i data-lucide="lightbulb"></i><span>选题库</span></a>
+          <a href="/voiceover"><i data-lucide="audio-lines"></i><span>口播配音</span></a>
+          <a href="/clips"><i data-lucide="film"></i><span>事件镜头</span></a>
+          <a href="/overlays" class="is-active"><i data-lucide="layers-3"></i><span>叠加模板</span></a>
+        </nav>
+        <div class="section-heading overlay-add">
+          <span>叠加模板</span>
+          <div class="overlay-add-wrap">
+            <button class="icon-button small" id="addOverlayButton" type="button" title="新建" aria-label="新建叠加模板">
+              <i data-lucide="plus"></i>
+            </button>
+            <div class="overlay-component-menu" id="componentMenu" hidden></div>
+          </div>
+        </div>
+        <div class="voice-list" id="overlayList"></div>
+        <div class="sidebar-note">
+          <i data-lucide="layers"></i>
+          <span>一条叠加模板就是一套图 + 一套参数。新组件加到目录里，不用新开页面。</span>
+        </div>
+      </aside>
+
+      <main class="workspace overlays-stage">
+        <div class="overlay-toolbar">
+          <div class="overlay-toolbar-context">
+            <span class="toolbar-dot"></span> 编辑中 · 自动保存
+          </div>
+          <div class="overlay-toolbar-actions">
+            <button class="toolbar-button" id="toolbarPublishButton" type="button"><i data-lucide="send"></i><span>加入事件镜头</span></button>
+            <button class="toolbar-button primary" id="toolbarRenderButton" type="button"><i data-lucide="download"></i><span>导出模板</span></button>
+          </div>
+        </div>
+        <div class="overlay-stage-meta">
+          <div>
+            <p class="eyebrow" id="overlayType">叠加模板</p>
+            <input id="overlayTitle" class="overlay-title" type="text" maxlength="40" placeholder="给这条叠加模板起个名字" />
+          </div>
+          <p class="result-detail" id="overlayHint">全屏硬切。左侧拖拽调顺序，右侧实时看成片效果。</p>
+        </div>
+
+        <div class="overlay-workbench-grid">
+          <!-- 左侧：素材序列管理看板 -->
+          <section class="overlay-manager-pane" aria-label="素材序列看板">
+            <div class="pane-heading">
+              <div class="pane-heading-group">
+                <span>素材序列总览</span>
+                <span class="history-count" id="filledCount">0/4</span>
+              </div>
+              <div class="pane-actions">
+                <button class="small-toolbar-button" id="batchUploadButton" type="button">
+                  <i data-lucide="upload-cloud"></i><span>批量上传图片</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="overlay-manager-body">
+              <div class="overlay-drag-hint-bar">
+                <i data-lucide="move"></i>
+                <span>按住卡片可直接拖拽调整播放顺序；点击「设为定格」指定刹车画面；点击「微调取景」在右侧调整裁切。</span>
+              </div>
+              <div class="overlay-slots" id="overlaySlots"></div>
+            </div>
+
+            <div class="overlay-timeline" id="overlayTimeline" aria-label="画面节奏"></div>
+          </section>
+
+          <!-- 右侧：真实 9:16 成片预览与节奏参数 -->
+          <section class="overlay-inspector-pane" aria-label="成片预览与控制">
+            <div class="pane-heading">
+              <div class="pane-heading-group">
+                <span>成片实时预览</span>
+                <span class="preview-badge">1080×1920 (9:16)</span>
+              </div>
+              <span class="history-count" id="previewTime">0.0s</span>
+            </div>
+
+            <div class="overlay-preview-container">
+              <div class="overlay-preview-viewport">
+                <div class="overlay-canvas overlay-preview-canvas" id="overlayPreview"></div>
+              </div>
+              <div class="overlay-preview-overlay-controls">
+                <button class="text-button" id="previewPlayButton" type="button">播放</button>
+                <button class="text-button" id="previewRestartButton" type="button">从头</button>
+                <span class="preview-stage-hint" id="previewFocusHint">当前可直接在画面上拖拽调整取景</span>
+              </div>
+            </div>
+
+            <div class="overlay-controls-panel">
+              <div class="section-subheading"><span>模板节奏与参数</span></div>
+              <div class="overlay-knobs" id="overlayKnobs"></div>
+              <div class="overlay-outputs" id="overlayOutputs"></div>
+              <label for="exportFormat">导出格式（1080p · 30 帧）</label>
+              <select id="exportFormat"><option value="preview">MP4 普通视频</option><option value="webm">WebM 透明叠加素材</option></select>
+              <div class="overlay-export">
+                <button class="primary-button" id="renderButton" type="button">
+                  <i data-lucide="clapperboard"></i>
+                  <span>导出模板</span>
+                </button>
+                <div class="overlay-secondary-actions">
+                  <button class="icon-button small" id="duplicateButton" type="button" title="复制模板" aria-label="复制模板">
+                    <i data-lucide="copy"></i>
+                  </button>
+                  <button class="icon-button small danger-icon" id="deleteButton" type="button" title="删除模板" aria-label="删除模板">
+                    <i data-lucide="trash-2"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+
+    </div>
+
+    <dialog id="exportDialog" class="export-dialog">
+      <form method="dialog">
+        <div class="dialog-header">
+          <div><p class="eyebrow">模板操作</p><h2>选择产物或加入事件镜头</h2></div>
+          <button class="icon-button" value="cancel" aria-label="关闭"><i data-lucide="x"></i></button>
+        </div>
+        <div class="export-choice-list" id="exportChoiceList"></div>
+        <div class="overlay-publish">
+                  <div class="section-heading"><span>加入事件镜头</span></div>
+                  <label class="overlay-knob" for="eventSelect">
+                    <span>放到哪个事件</span>
+                    <select id="eventSelect"></select>
+                  </label>
+                  <label class="overlay-knob hidden" id="newEventField" for="newEventTitle">
+                    <span>新事件名称</span>
+                    <input id="newEventTitle" type="text" maxlength="40" placeholder="例如：四账号叠卡" />
+                  </label>
+                  <button class="text-button" id="publishButton" type="button">加入事件镜头</button>
+                  <p class="field-help" id="publishHint">先导出，再选已有事件或新建一格。事件镜头里放预览 mp4，方便点开看。</p>
+                </div>
+        <div class="dialog-actions"><button class="text-button" value="cancel">关闭</button></div>
+      </form>
+    </dialog>
+    <input id="slotFileInput" type="file" accept="image/jpeg,image/png,image/webp" hidden />
+    <input id="batchFileInput" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden />
+    <input id="musicFileInput" type="file" accept="audio/mpeg,audio/mp4,audio/wav,audio/aac,audio/ogg,.mp3,.m4a,.wav,.aac,.ogg" hidden />
+    <div class="toast" id="toast" role="status"></div>
+    <script src="/navigation.js?v=nav8"></script>
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script src="/overlay-components.js?v=fx-drag1"></script>
+    <script src="/overlays.js?v=ondemand1-fx-drag1"></script>
+  </body>
+</html>

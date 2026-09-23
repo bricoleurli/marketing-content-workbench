@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0d0e10" />
+    <title>素材库 · 营销内容</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/library.css?v=library1" />
+  </head>
+  <body class="library-page">
+    <div class="library-shell">
+      <header class="library-topbar">
+        <div class="library-brand">
+          <div class="library-brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+          <div><strong>素材库</strong><small>营销内容资产</small></div>
+        </div>
+        <div class="library-status" id="libraryStatus"><i></i><span>读取本机素材</span></div>
+      </header>
+
+      <main class="library-main">
+        <section class="library-intro">
+          <div>
+            <p class="library-eyebrow">MARKETING ASSET LIBRARY</p>
+            <h1>把可复用的素材，放在一个地方。</h1>
+            <p class="library-lead">口播配音、事件镜头和叠加模板在这里被看见、被整理、被带走。最后的拼接交给剪映。</p>
+          </div>
+          <div class="library-intro-actions">
+            <a class="library-button" href="/topics"><i data-lucide="lightbulb"></i><span>去选题库挑选题</span></a>
+            <a class="library-button primary" href="/voiceover"><i data-lucide="audio-lines"></i><span>生成口播</span></a>
+            <a class="library-button" href="/overlays"><i data-lucide="layers-3"></i><span>制作叠加模板</span></a>
+          </div>
+        </section>
+
+        <section class="library-stats" aria-label="素材统计">
+          <div class="library-stat"><span>口播配音</span><strong id="voiceCount">0</strong><small>可直接导入剪映</small></div>
+          <div class="library-stat"><span>事件镜头</span><strong id="clipCount">0</strong><small>按事件分组</small></div>
+          <div class="library-stat"><span>叠加模板</span><strong id="overlayCount">0</strong><small>可继续生成成片</small></div>
+          <div class="library-stat accent"><span>已选择</span><strong id="selectedCount">0</strong><small>打包交给别人</small></div>
+        </section>
+
+        <section class="library-browser" aria-label="素材浏览器">
+          <div class="library-browser-head">
+            <div>
+              <p class="library-eyebrow">BROWSE</p>
+              <h2>全部素材</h2>
+            </div>
+            <div class="library-actions">
+              <label class="library-search" for="assetSearch"><i data-lucide="search"></i><input id="assetSearch" type="search" placeholder="搜索名称、事件或标签" autocomplete="off" /></label>
+              <button class="library-button" id="selectVisibleButton" type="button"><i data-lucide="check-check"></i><span>全选当前</span></button>
+              <button class="library-button primary" id="exportPackButton" type="button" disabled><i data-lucide="package"></i><span>导出素材包</span></button>
+            </div>
+          </div>
+          <div class="library-filters" role="tablist" aria-label="素材类型">
+            <button class="library-filter is-active" type="button" data-filter="all">全部</button>
+            <button class="library-filter" type="button" data-filter="voice">口播配音</button>
+            <button class="library-filter" type="button" data-filter="clip">事件镜头</button>
+            <button class="library-filter" type="button" data-filter="overlay">叠加模板</button>
+            <span class="library-result-count" id="resultCount">0 条素材</span>
+          </div>
+          <div class="library-grid" id="assetGrid"></div>
+          <div class="library-empty" id="libraryEmpty" hidden>
+            <i data-lucide="folder-open"></i><strong>还没有匹配的素材</strong><span>换一个关键词，或先从上方入口制作一条素材。</span>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog class="asset-dialog" id="assetDialog">
+      <form method="dialog">
+        <button class="asset-dialog-close" value="cancel" aria-label="关闭"><i data-lucide="x"></i></button>
+        <div class="asset-dialog-preview" id="assetDialogPreview"></div>
+        <div class="asset-dialog-copy">
+          <p class="library-eyebrow" id="assetDialogType">素材详情</p>
+          <h2 id="assetDialogTitle">素材</h2>
+          <p id="assetDialogDescription"></p>
+          <div class="asset-dialog-meta" id="assetDialogMeta"></div>
+          <div class="asset-dialog-actions">
+            <a class="library-button primary" id="assetDialogDownload" href="#" download><i data-lucide="download"></i><span>下载素材</span></a>
+            <a class="library-button" id="assetDialogOpen" href="#"><i data-lucide="external-link"></i><span>打开管理页</span></a>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <audio id="libraryAudio" preload="metadata"></audio>
+    <div class="library-toast" id="libraryToast" role="status"></div>
+    <script src="/navigation.js?v=nav8"></script>
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script src="/library.js?v=library2"></script>
+  </body>
+</html>

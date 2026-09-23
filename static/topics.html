@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0d0e10" />
+    <title>选题库 · 营销内容</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/topics.css?v=topics3" />
+  </head>
+  <body class="topics-page">
+    <div class="topics-shell">
+      <header class="topics-topbar">
+        <div class="topics-brand">
+          <div class="topics-brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+          <div><strong>选题库</strong><small>营销内容选题</small></div>
+        </div>
+        <div class="topics-status" id="topicsStatus"><i></i><span>读取选题清单</span></div>
+      </header>
+
+      <main class="topics-main">
+        <section class="topics-intro">
+          <div>
+            <p class="topics-eyebrow">TOPIC LIBRARY</p>
+            <h1>用户会问的每一个问题，都是一条选题。</h1>
+            <p class="topics-lead">按用户卡点分组：先挑一个真问题，再决定用什么内容回答它。标记已用，避免重复生产。</p>
+          </div>
+          <div class="topics-intro-actions">
+            <button class="topics-button" id="copyVisibleButton" type="button"><i data-lucide="clipboard-copy"></i><span>复制当前清单</span></button>
+          </div>
+        </section>
+
+        <section class="topics-stats" id="topicStats" aria-label="选题分类"></section>
+
+        <section class="topics-browser" aria-label="选题清单">
+          <div class="topics-browser-head">
+            <div>
+              <p class="topics-eyebrow">BROWSE</p>
+              <h2>选题清单<span class="topics-result-count" id="resultCount">0 条选题</span></h2>
+            </div>
+            <div class="topics-actions">
+              <label class="topics-search" for="topicSearch"><i data-lucide="search"></i><input id="topicSearch" type="search" placeholder="搜索选题、分组或分类" autocomplete="off" /></label>
+              <button class="topics-button" id="hideDoneButton" type="button" aria-pressed="false"><i data-lucide="eye"></i><span>只看未用</span></button>
+            </div>
+          </div>
+          <div class="topics-filters" id="topicFilters" role="tablist" aria-label="分组筛选"></div>
+          <div id="topicLists"></div>
+          <div class="topics-empty" id="topicsEmpty" hidden>
+            <i data-lucide="search-x"></i><strong>没有匹配的选题</strong><span>换一个关键词，或清除上方的分类筛选。</span>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="topics-toast" id="topicsToast" role="status"></div>
+    <script src="/navigation.js?v=nav8"></script>
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script src="/topics-data.js?v=topics1"></script>
+    <script src="/topics.js?v=topics4"></script>
+  </body>
+</html>

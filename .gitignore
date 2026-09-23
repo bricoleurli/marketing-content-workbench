@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.env.*
+.DS_Store
+outputs/
+config/
+event-library/
+overlays/
+data/
+.clip-posters/
+*.bundle

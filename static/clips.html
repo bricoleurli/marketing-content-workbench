@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0d0e10" />
+    <link rel="icon" href="data:," />
+    <title>事件镜头 · 素材库</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css?v=dark-workbench3" />
+  </head>
+  <body class="clips-page">
+    <div class="app-shell clips-shell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div>
+            <strong>素材库</strong>
+            <span>事件镜头</span>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <span class="connection-status" id="clipStatus"><i></i><span>读取素材库</span></span>
+        </div>
+      </header>
+
+      <aside class="voice-sidebar clips-filter">
+        <nav class="app-sidebar-nav" aria-label="工作台功能">
+          <a href="/library"><i data-lucide="library"></i><span>素材库</span></a>
+          <a href="/topics"><i data-lucide="lightbulb"></i><span>选题库</span></a>
+          <a href="/voiceover"><i data-lucide="audio-lines"></i><span>口播配音</span></a>
+          <a href="/clips" class="is-active" aria-current="page"><i data-lucide="film"></i><span>事件镜头</span></a>
+          <a href="/overlays"><i data-lucide="layers-3"></i><span>叠加模板</span></a>
+        </nav>
+      </aside>
+
+      <main class="workspace clips-workspace">
+        <header class="clips-toolbar">
+          <div class="clips-heading">
+            <div>
+              <p class="eyebrow">素材库 / 事件工作区</p>
+              <h1>事件镜头</h1>
+            </div>
+            <span class="clips-total" id="clipCount">0 个事件</span>
+          </div>
+          <div class="clips-toolbar-actions">
+            <label class="clips-search" for="clipSearch">
+              <i data-lucide="search"></i>
+              <input id="clipSearch" type="search" placeholder="搜索名称、事件或标签" autocomplete="off" />
+            </label>
+            <label class="clips-select" for="clipSort">
+              <span class="sr-only">排序</span>
+              <select id="clipSort">
+                <option value="recent">最近更新</option>
+                <option value="title">名称 A-Z</option>
+                <option value="count">素材数量</option>
+              </select>
+            </label>
+            <button class="primary-button clips-new-group" id="newGroupButton" type="button">
+              <i data-lucide="folder-plus"></i><span>新建分组</span>
+            </button>
+            <button class="primary-button clips-import" id="importCapButton" type="button">
+              <i data-lucide="upload"></i><span>从 Cap 导入</span>
+            </button>
+            <input id="capFileInput" type="file" accept=".mp4,video/mp4" multiple hidden />
+          </div>
+        </header>
+
+        <div class="clips-context-bar">
+          <div class="clips-context-copy">
+            <button class="clips-back-button" id="backToEventsButton" type="button" hidden>
+              <i data-lucide="arrow-left"></i><span>事件工作区</span>
+            </button>
+            <div>
+              <strong id="boardTitle">全部事件</strong>
+              <span id="boardDescription">按事件组织可复用的真实画面和叠加素材</span>
+            </div>
+            <code class="event-id-label" id="contextEventId" hidden></code>
+          </div>
+          <div class="clips-context-actions">
+            <button class="filter-chip is-active" type="button" data-source-filter="all">全部</button>
+            <button class="filter-chip" type="button" data-source-filter="event-library">事件素材</button>
+            <button class="filter-chip" type="button" data-source-filter="overlay-template">叠加模板</button>
+          </div>
+        </div>
+
+        <div class="clips-browser">
+          <section class="clips-library-panel" aria-label="事件镜头列表">
+            <div class="clips-library-heading">
+              <span id="libraryTitle">事件工作区</span>
+              <span class="clips-library-hint" id="libraryHint">每个事件只展示一次</span>
+            </div>
+            <div class="event-workspace-grid" id="eventWorkspaceGrid"></div>
+            <div class="clip-grid" id="clipGrid" hidden></div>
+          </section>
+
+          <aside class="clip-detail-panel" id="detailPanel" aria-label="素材详情">
+            <div class="detail-empty" id="detailEmpty">
+              <span class="detail-empty-icon"><i data-lucide="mouse-pointer-2"></i></span>
+              <strong>选择一条素材</strong>
+              <span>这里会显示预览、来源和管理操作</span>
+            </div>
+            <div class="detail-content" id="detailContent" hidden>
+              <div class="detail-header">
+                <div>
+                  <p class="eyebrow">素材详情</p>
+                  <h2 id="detailTitle">事件镜头</h2>
+                </div>
+                <button class="icon-button small" id="closeDetailButton" type="button" title="关闭详情" aria-label="关闭详情">
+                  <i data-lucide="x"></i>
+                </button>
+              </div>
+              <div class="detail-preview">
+                <video id="detailVideo" controls playsinline preload="metadata"></video>
+              </div>
+              <div class="detail-meta-grid">
+                <div><span>所属分组</span><strong id="detailEvent"></strong></div>
+                <div><span>时长</span><strong id="detailDuration"></strong></div>
+                <div><span>来源</span><strong id="detailSource"></strong></div>
+                <div><span>文件</span><strong id="detailFile"></strong></div>
+              </div>
+              <p class="detail-description" id="detailDescription"></p>
+              <div class="detail-tags" id="detailTags"></div>
+              <div class="detail-actions">
+                <a class="primary-button" id="useInStudioButton" href="/library"><i data-lucide="library"></i><span>回到素材库</span></a>
+                <a class="icon-button" id="downloadClipButton" href="#" download title="下载素材" aria-label="下载素材"><i data-lucide="download"></i></a>
+              </div>
+              <div class="detail-management">
+                <div class="detail-management-heading"><span>管理素材</span><small>名称和说明保存在本地</small></div>
+                <button class="management-button" id="renameClipButton" type="button"><i data-lucide="pencil"></i><span>编辑名称与说明</span></button>
+                <button class="management-button danger-text" id="deleteClipButton" type="button"><i data-lucide="trash-2"></i><span>删除这条素材</span></button>
+              </div>
+              <form class="detail-edit-form" id="detailEditForm" hidden>
+                <label><span>素材名称</span><input id="detailTitleInput" maxlength="80" /></label>
+                <label><span>所属分组</span><select id="detailGroupSelect"></select></label>
+                <label><span>说明</span><textarea id="detailDescriptionInput" rows="3" maxlength="180"></textarea></label>
+                <label><span>标签</span><input id="detailTagsInput" maxlength="120" placeholder="用逗号分隔，例如：产品、证据" /></label>
+                <div class="detail-edit-actions">
+                  <button class="text-button" id="cancelEditButton" type="button">取消</button>
+                  <button class="primary-button" type="submit"><i data-lucide="save"></i><span>保存</span></button>
+                </div>
+              </form>
+            </div>
+          </aside>
+        </div>
+      </main>
+    </div>
+
+    <dialog id="newGroupDialog" class="clip-group-dialog">
+      <form id="newGroupForm">
+        <div class="dialog-header">
+          <div><p class="eyebrow">素材管理</p><h2>新建素材分组</h2></div>
+          <button class="icon-button" id="closeGroupDialogButton" type="button" aria-label="关闭"><i data-lucide="x"></i></button>
+        </div>
+        <label class="field-label" for="newGroupTitle">分组名称</label>
+        <input id="newGroupTitle" type="text" maxlength="40" placeholder="例如：产品功能演示" autocomplete="off" required />
+        <p class="field-help">同一个分组可以放多条事件镜头，之后也可以在素材详情中调整所属分组。</p>
+        <div class="dialog-actions">
+          <button class="text-button" id="cancelGroupButton" type="button">取消</button>
+          <button class="primary-button" type="submit">创建分组</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="importCapDialog" class="clip-group-dialog cap-import-dialog">
+      <form id="importCapForm">
+        <div class="dialog-header">
+          <div><p class="eyebrow">本地素材入库</p><h2>从 Cap 导入事件镜头</h2></div>
+          <button class="icon-button" id="closeImportDialogButton" type="button" aria-label="关闭"><i data-lucide="x"></i></button>
+        </div>
+        <p class="field-help cap-import-help">选择 Cap 导出的 mp4，文件会保存在所选事件分组中，浏览器不会上传到云端。</p>
+        <label class="field-label" for="importEventSelect">放入事件分组</label>
+        <select id="importEventSelect" required></select>
+        <label class="field-label" for="importTitlePrefix">名称前缀（可选）</label>
+        <input id="importTitlePrefix" type="text" maxlength="40" placeholder="例如：官网演示 · " autocomplete="off" />
+        <button class="text-button cap-choose-files" id="chooseCapFilesButton" type="button"><i data-lucide="file-plus-2"></i><span>选择 Cap mp4 文件</span></button>
+        <div class="cap-import-files" id="importFileList"></div>
+        <div class="cap-import-progress" id="importProgress" role="status"></div>
+        <div class="dialog-actions">
+          <button class="text-button" id="cancelImportButton" type="button">取消</button>
+          <button class="primary-button" type="submit"><i data-lucide="upload"></i><span>导入到素材库</span></button>
+        </div>
+      </form>
+    </dialog>
+    <div class="toast" id="toast" role="status"></div>
+    <script src="/navigation.js?v=nav8"></script>
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script src="/clips.js?v=clips5"></script>
+  </body>
+</html>

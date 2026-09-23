@@ -1,0 +1,2 @@
+#!/bin/sh
+LD_LIBRARY_PATH=/opt/marketing-workbench/vendor/usr/lib/x86_64-linux-gnu:/opt/marketing-workbench/vendor/usr/lib/x86_64-linux-gnu/pulseaudio:/opt/marketing-workbench/vendor/usr/lib/x86_64-linux-gnu/blas:/opt/marketing-workbench/vendor/usr/lib/x86_64-linux-gnu/lapack exec /opt/marketing-workbench/vendor/usr/bin/ffprobe "$@"

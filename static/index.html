@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0d0e10" />
+    <title>口播配音 · 素材库</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css?v=dark-workbench1" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div>
+            <strong>素材库</strong>
+            <span>口播配音</span>
+          </div>
+        </div>
+        <nav class="page-nav" aria-label="工作台页面">
+          <a href="/library">素材库</a>
+          <a href="/topics">选题库</a>
+          <a class="is-active" href="/voiceover" aria-current="page">口播配音</a>
+          <a href="/clips">事件镜头</a>
+          <a href="/overlays">叠加模板</a>
+        </nav>
+        <div class="topbar-actions">
+          <span class="connection-status" id="connectionStatus">
+            <i></i><span>检查配置</span>
+          </span>
+          <button class="icon-button" id="settingsButton" type="button" title="API 设置" aria-label="API 设置">
+            <i data-lucide="settings-2"></i>
+          </button>
+        </div>
+      </header>
+
+      <aside class="voice-sidebar">
+        <nav class="app-sidebar-nav" aria-label="工作台功能">
+          <a href="/library"><i data-lucide="library"></i><span>素材库</span></a>
+          <a href="/topics"><i data-lucide="lightbulb"></i><span>选题库</span></a>
+          <a href="/voiceover" class="is-active"><i data-lucide="audio-lines"></i><span>口播配音</span></a>
+          <a href="/clips"><i data-lucide="film"></i><span>事件镜头</span></a>
+          <a href="/overlays"><i data-lucide="layers-3"></i><span>叠加模板</span></a>
+        </nav>
+        <div class="section-heading">
+          <span>可用音色</span>
+          <button class="icon-button small" id="addVoiceButton" type="button" title="添加音色" aria-label="添加音色">
+            <i data-lucide="plus"></i>
+          </button>
+        </div>
+        <div class="voice-list" id="voiceList"></div>
+        <div class="sidebar-note">
+          <i data-lucide="lock-keyhole"></i>
+          <span>密钥只保存在这台电脑</span>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <section class="editor-section">
+          <div class="editor-header">
+            <div>
+              <p class="eyebrow">文案</p>
+              <h1>先把口播做出来</h1>
+            </div>
+            <span class="character-count"><strong id="characterCount">0</strong> / <span id="characterLimit">500</span></span>
+          </div>
+          <textarea
+            id="scriptInput"
+            maxlength="500"
+            placeholder="粘贴一段营销口播文案，生成后就能进入口播剪辑……"
+            spellcheck="false"
+          ></textarea>
+          <div class="controls-row">
+            <div class="segmented-control" id="modelControl" aria-label="生成模型">
+              <button class="active" type="button" data-model="s2.1-pro-free">免费模型</button>
+              <button type="button" data-model="s2.1-pro">稳定模型</button>
+            </div>
+            <label class="speed-control" for="speedInput">
+              <span>语速</span>
+              <input id="speedInput" type="range" min="0.5" max="2" step="0.1" value="1.5" />
+              <output id="speedValue">1.5x</output>
+            </label>
+          </div>
+          <div class="action-row">
+            <div class="cost-estimate" id="costEstimate">免费开发模型 · $0</div>
+            <button class="primary-button" id="generateButton" type="button">
+              <i data-lucide="audio-lines"></i>
+              <span>生成配音</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="result-section" id="resultSection" aria-live="polite">
+          <div class="empty-result" id="emptyResult">
+            <div class="empty-wave" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <p>生成结果会出现在这里</p>
+          </div>
+          <div class="current-result hidden" id="currentResult">
+            <div class="result-meta">
+              <div>
+                <p class="eyebrow">最新生成</p>
+                <h2 id="resultTitle">配音已完成</h2>
+              </div>
+              <div class="result-actions">
+                <a class="icon-button" id="libraryButton" href="/library" title="回到素材库" aria-label="回到素材库">
+                  <i data-lucide="library"></i>
+                </a>
+                <a class="icon-button" id="downloadButton" href="#" download title="下载 MP3" aria-label="下载 MP3">
+                  <i data-lucide="download"></i>
+                </a>
+              </div>
+            </div>
+            <audio id="audioPlayer" controls preload="metadata"></audio>
+            <p class="result-detail" id="resultDetail"></p>
+          </div>
+        </section>
+      </main>
+
+      <aside class="history-panel">
+        <div class="section-heading">
+          <span>最近生成</span>
+          <span class="history-count" id="historyCount">0</span>
+        </div>
+        <div class="history-list" id="historyList"></div>
+      </aside>
+    </div>
+
+    <dialog id="settingsDialog">
+      <form method="dialog" id="settingsForm">
+        <div class="dialog-header">
+          <div>
+            <p class="eyebrow">本机配置</p>
+            <h2>Fish Audio API</h2>
+          </div>
+          <button class="icon-button" type="button" data-close-dialog="settingsDialog" aria-label="关闭">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <label class="field-label" for="apiKeyInput">API Key</label>
+        <div class="secret-input">
+          <input id="apiKeyInput" type="password" autocomplete="off" placeholder="粘贴 Fish Audio API Key" />
+          <button class="icon-button small" id="toggleKeyButton" type="button" title="显示或隐藏密钥" aria-label="显示或隐藏密钥">
+            <i data-lucide="eye"></i>
+          </button>
+        </div>
+        <p class="field-help">保存后写入 <code>~/.config/fish-audio-workbench/</code>，网页无法读取完整密钥。</p>
+        <div class="dialog-actions">
+          <button class="text-button" type="button" data-close-dialog="settingsDialog">取消</button>
+          <button class="primary-button compact" id="saveSettingsButton" type="button">保存设置</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="voiceDialog">
+      <form method="dialog" id="voiceForm">
+        <div class="dialog-header">
+          <div>
+            <p class="eyebrow">固定音色</p>
+            <h2>添加 Fish Audio 音色</h2>
+          </div>
+          <button class="icon-button" type="button" data-close-dialog="voiceDialog" aria-label="关闭">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <label class="field-label" for="voiceNameInput">显示名称</label>
+        <input id="voiceNameInput" type="text" maxlength="40" placeholder="例如：旁白男声" required />
+        <label class="field-label" for="voiceIdInput">Voice ID</label>
+        <input id="voiceIdInput" type="text" maxlength="128" placeholder="从 Fish Audio 音色页面网址复制" required />
+        <label class="field-label" for="voiceDescriptionInput">备注</label>
+        <input id="voiceDescriptionInput" type="text" maxlength="80" placeholder="例如：适合教程口播" />
+        <div class="dialog-actions">
+          <button class="text-button" type="button" data-close-dialog="voiceDialog">取消</button>
+          <button class="primary-button compact" id="saveVoiceButton" type="button">添加音色</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status"></div>
+
+    <script src="/navigation.js?v=nav8"></script>
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

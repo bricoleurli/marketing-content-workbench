@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: marketing-content-workbench
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: WORKBENCH_HOST
+        value: 0.0.0.0
+      - key: WORKBENCH_DATA_DIR
+        value: /data
+      - key: FISH_API_KEY
+        sync: false
+    disk:
+      name: workbench-data
+      mountPath: /data
+      sizeGB: 10

@@ -1,0 +1,27 @@
+[Unit]
+Description=Marketing content workbench (slim)
+After=network.target
+
+[Service]
+User=marketing-workbench
+Group=marketing-workbench
+WorkingDirectory=/opt/marketing-workbench/app
+Environment=PATH=/opt/marketing-workbench/bin:/opt/marketing-workbench/venv/bin:/usr/bin:/bin
+Environment=WORKBENCH_DATA_DIR=/var/lib/marketing-workbench
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/marketing-workbench/venv/bin/python server.py --host 127.0.0.1 --port 8876
+Restart=on-failure
+RestartSec=5
+CPUQuota=150%
+MemoryMax=2G
+MemorySwapMax=0
+Nice=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/marketing-workbench
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
