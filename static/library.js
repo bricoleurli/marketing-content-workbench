@@ -203,7 +203,7 @@ function openAsset(asset) {
   stopDialogMedia();
   elements.assetDialogType.textContent = labelFor(asset.type);
   elements.assetDialogTitle.textContent = asset.title;
-  elements.assetDialogDescription.textContent = asset.description || "这是一条可复用的本地素材。";
+  elements.assetDialogDescription.textContent = asset.description || "这是一条可复用的工作台素材。";
   elements.assetDialogMeta.innerHTML = [
     asset.duration ? `<span>时长 · ${escapeHtml(formatTime(asset.duration))}</span>` : "",
     asset.eventTitle ? `<span>事件 · ${escapeHtml(asset.eventTitle)}</span>` : "",
@@ -308,7 +308,7 @@ async function loadAssets() {
     ]);
     state.assets = normalizeAssets(voiceovers, clips, overlays);
     elements.libraryStatus.classList.add("ready");
-    elements.libraryStatus.querySelector("span").textContent = `本机素材 · ${state.assets.length} 条`;
+    elements.libraryStatus.querySelector("span").textContent = `工作台素材 · ${state.assets.length} 条`;
     renderGrid();
   } catch (error) {
     elements.libraryStatus.querySelector("span").textContent = "读取失败";
