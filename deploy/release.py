@@ -16,8 +16,6 @@ releases=base/'releases'
 releases.mkdir(exist_ok=True)
 release=releases/sha
 old=app.resolve()
-if (app/'requirements.txt').read_bytes() != urllib.request.urlopen('https://raw.githubusercontent.com/bricoleurli/marketing-content-workbench/'+sha+'/requirements.txt',timeout=60).read():
-    raise SystemExit('Dependency changes require updating the isolated runtime before release.')
 if not release.exists():
     with tempfile.TemporaryDirectory(dir=releases) as temp:
         temp=pathlib.Path(temp)
@@ -26,6 +24,8 @@ if not release.exists():
             shutil.copyfileobj(response,out)
         with tarfile.open(archive) as tar: tar.extractall(temp/'source',filter='data')
         source=next((temp/'source').iterdir())
+        if (app/'requirements.txt').read_bytes() != (source/'requirements.txt').read_bytes():
+            raise SystemExit('Dependency changes require updating the isolated runtime before release.')
         subprocess.run([str(base/'venv/bin/python'),'-m','unittest','discover','tests'],cwd=source,check=True)
         (source/'DEPLOYED_COMMIT').write_text(sha+'\n')
         source.rename(release)
