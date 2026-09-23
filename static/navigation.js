@@ -158,6 +158,9 @@
       .topbar { justify-content: flex-end; }
       .topbar .brand-lockup, .topbar .page-nav { display: none !important; }
       .studio-main { min-width: 0; }
+      @media (max-width: 720px) {
+        body { overflow-y: auto !important; }
+      }
       @media (max-width: 1050px) {
         .app-shell { grid-template-columns: minmax(0, 1fr) !important; }
       }
