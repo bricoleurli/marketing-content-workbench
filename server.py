@@ -26,6 +26,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 from common import read_json, safe_leaf, write_private_json
 from overlay_components import DEFAULT_COMPONENT_ID, get_component, public_catalog
 from overlay_store import OverlayStore, overlay_id_ok
+from topic_store import TopicStore
 
 
 APP_DIR = Path(__file__).resolve().parent
@@ -856,6 +857,12 @@ class WorkbenchHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802
         path = urlparse(self.path).path
+        if path == "/api/topics":
+            try:
+                self.send_json(TopicStore(DATA_ROOT / "topics-custom.json").read())
+            except (OSError, ValueError):
+                self.send_json({"error": "自建选题读取失败，请稍后重试"}, HTTPStatus.INTERNAL_SERVER_ERROR)
+            return
         if path == "/topics-data.js" and (DATA_ROOT / "topics-data.js").is_file():
             self.serve_file(DATA_ROOT / "topics-data.js", "text/javascript; charset=utf-8", "no-store")
             return
@@ -1040,7 +1047,7 @@ class WorkbenchHandler(SimpleHTTPRequestHandler):
             if path.startswith("/api/overlays"):
                 self.handle_overlay_write(path)
                 return
-            payload = self.read_json_body()
+            payload = self.read_json_body(limit=1024 * 1024 if path == "/api/topics" else MAX_REQUEST_BYTES)
             if path == "/api/clips/manage":
                 action = str(payload.get("action") or "").strip()
                 if action == "create-group":
@@ -1053,6 +1060,8 @@ class WorkbenchHandler(SimpleHTTPRequestHandler):
                     self.send_json({"ok": True, "clips": delete_event_clip(payload)})
                 else:
                     self.send_json({"error": "素材管理动作不正确"}, HTTPStatus.BAD_REQUEST)
+            elif path == "/api/topics":
+                self.send_json(TopicStore(DATA_ROOT / "topics-custom.json").add(payload))
             elif path == "/api/settings":
                 self.save_settings(payload)
             elif path == "/api/generate":

@@ -11,3 +11,5 @@ overlays/
 data/
 .clip-posters/
 *.bundle
+topics-custom.json
+topics-custom.json.tmp

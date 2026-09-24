@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/topics.css?v=topics3" />
+    <link rel="stylesheet" href="/topics.css?v=topics5" />
   </head>
   <body class="topics-page">
     <div class="topics-shell">
@@ -28,6 +28,8 @@
             <p class="topics-lead">按用户卡点分组：先挑一个真问题，再决定用什么内容回答它。标记已用，避免重复生产。</p>
           </div>
           <div class="topics-intro-actions">
+            <button class="topics-button topics-primary" id="newTopicButton" type="button">新建选题</button>
+            <button class="topics-button" id="importTopicsButton" type="button">批量导入</button>
             <button class="topics-button" id="copyVisibleButton" type="button"><i data-lucide="clipboard-copy"></i><span>复制当前清单</span></button>
           </div>
         </section>
@@ -54,10 +56,31 @@
       </main>
     </div>
 
+    <dialog id="topicEditor" class="topics-editor" aria-labelledby="topicEditorTitle">
+      <form id="topicForm">
+        <h2 id="topicEditorTitle">新建选题</h2>
+        <p class="topics-editor-hint">保存到当前工作台，其他访问者也能看到。</p>
+        <label>分类<input id="newTopicCategory" list="topicCategoryOptions" maxlength="60" required value="自建选题" /></label>
+        <datalist id="topicCategoryOptions"></datalist>
+        <label>分组<input id="newTopicGroup" list="topicGroupOptions" maxlength="60" required value="默认分组" /></label>
+        <datalist id="topicGroupOptions"></datalist>
+        <div id="topicFileArea" hidden>
+          <label>上传 TXT / Markdown 文件<input id="topicFile" type="file" accept=".txt,.md,text/plain,text/markdown" /></label>
+          <p class="topics-editor-hint">UTF-8 编码，每行一条；最多 200 条、100 KB。读取后可在下方修改，再保存。</p>
+        </div>
+        <label><span id="topicTextLabel">选题内容</span><textarea id="newTopicText" rows="7" required placeholder="写下你想创作的选题"></textarea></label>
+        <p id="topicEditorCount" class="topics-editor-hint"></p>
+        <p id="topicEditorError" class="topics-editor-error" role="alert"></p>
+        <div class="topics-editor-actions">
+          <button class="topics-button" id="cancelTopicButton" type="button">取消</button>
+          <button class="topics-button topics-primary" id="saveTopicButton" type="submit">保存选题</button>
+        </div>
+      </form>
+    </dialog>
     <div class="topics-toast" id="topicsToast" role="status"></div>
     <script src="/navigation.js?v=nav8"></script>
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
     <script src="/topics-data.js?v=topics1"></script>
-    <script src="/topics.js?v=topics4"></script>
+    <script src="/topics.js?v=topics5"></script>
   </body>
 </html>

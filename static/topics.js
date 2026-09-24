@@ -1,6 +1,7 @@
 /* 选题库：清单 + 标签展示，支持分类筛选、搜索、复制和已用标记（存本机）。 */
 (() => {
-  const data = window.WORKBENCH_TOPICS || { categories: [] };
+  const original = window.WORKBENCH_TOPICS || { categories: [] };
+  let data = structuredClone(original);
   const STORAGE_KEY = "topics-status:v1";
   const state = {
     category: "all",
@@ -128,7 +129,7 @@
   }
 
   function renderStats() {
-    const cells = [{ id: "all", name: "全部选题", note: "5 类 13 组", count: totalTopicCount() }];
+    const cells = [{ id: "all", name: "全部选题", note: `${data.categories.length} 类 ${data.categories.reduce((n, c) => n + c.groups.length, 0)} 组`, count: totalTopicCount() }];
     data.categories.forEach((category) => {
       const count = category.groups.reduce((sum, group) => sum + group.topics.length, 0);
       cells.push({ id: category.id, name: category.name, note: category.note, count });
@@ -309,6 +310,142 @@
     const ok = await copyText(text);
     showToast(ok ? `已复制 ${count} 条选题` : "复制失败，请重试", !ok);
   });
+
+
+  const editor = document.getElementById("topicEditor");
+  const form = document.getElementById("topicForm");
+  const categoryInput = document.getElementById("newTopicCategory");
+  const groupInput = document.getElementById("newTopicGroup");
+  const textInput = document.getElementById("newTopicText");
+  const fileInput = document.getElementById("topicFile");
+  const saveButton = document.getElementById("saveTopicButton");
+  const cancelButton = document.getElementById("cancelTopicButton");
+  const errorEl = document.getElementById("topicEditorError");
+  let batchMode = false;
+  let saving = false;
+  let fileVersion = 0;
+
+  function mergeCustom(custom) {
+    data = structuredClone(original);
+    for (const source of custom.categories) {
+      let category = data.categories.find(c => c.name === source.name);
+      if (!category) {
+        category = { ...source, numeral: String(data.categories.length + 1), groups: [] };
+        data.categories.push(category);
+      }
+      for (const incoming of source.groups) {
+        let group = category.groups.find(g => g.name === incoming.name);
+        if (!group) {
+          group = { name: incoming.name, topics: [] };
+          category.groups.push(group);
+        }
+        group.topics = [...new Set([...group.topics, ...incoming.topics])];
+      }
+    }
+    renderAll();
+  }
+
+  async function topicRequest(options) {
+    const response = await fetch("/api/topics", { cache: "no-store", ...options });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "保存失败，请重试");
+    return result;
+  }
+
+  function topicLines() {
+    if (!batchMode) return textInput.value.trim() ? [textInput.value.trim()] : [];
+    return textInput.value.split(/\r?\n/).map(line => line.trim().replace(/^(?:[-*+]\s+|\d+[.)、]\s*)/, "")).filter(Boolean);
+  }
+
+  function updateCount() {
+    document.getElementById("topicEditorCount").textContent = `${topicLines().length} 条选题 · 每条最多 500 字`;
+  }
+
+  function updateGroups() {
+    const category = data.categories.find(c => c.name === categoryInput.value.trim());
+    document.getElementById("topicGroupOptions").replaceChildren(...(category?.groups || []).map(g => {
+      const option = document.createElement("option"); option.value = g.name; return option;
+    }));
+  }
+
+  function openEditor(batch) {
+    batchMode = batch;
+    fileVersion += 1;
+    form.reset();
+    saveButton.disabled = false;
+    const selected = data.categories.find(c => c.id === state.category);
+    categoryInput.value = selected?.name || "自建选题";
+    groupInput.value = state.group || "默认分组";
+    document.getElementById("topicEditorTitle").textContent = batch ? "批量导入选题" : "新建选题";
+    document.getElementById("topicTextLabel").textContent = batch ? "选题清单（每行一条，也可以直接粘贴）" : "选题内容";
+    document.getElementById("topicFileArea").hidden = !batch;
+    errorEl.textContent = "";
+    document.getElementById("topicCategoryOptions").replaceChildren(...data.categories.map(c => {
+      const option = document.createElement("option"); option.value = c.name; return option;
+    }));
+    updateGroups(); updateCount();
+    editor.showModal();
+    textInput.focus();
+  }
+
+  document.getElementById("newTopicButton").addEventListener("click", () => openEditor(false));
+  document.getElementById("importTopicsButton").addEventListener("click", () => openEditor(true));
+  categoryInput.addEventListener("input", updateGroups);
+  textInput.addEventListener("input", updateCount);
+  cancelButton.addEventListener("click", () => editor.close());
+  editor.addEventListener("cancel", event => { if (saving) event.preventDefault(); });
+  fileInput.addEventListener("change", async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    const version = ++fileVersion;
+    errorEl.textContent = "";
+    if (!/\.(txt|md)$/i.test(file.name) || file.size > 100 * 1024) {
+      errorEl.textContent = "请选择不超过 100 KB 的 TXT 或 Markdown 文件";
+      fileInput.value = ""; return;
+    }
+    saveButton.disabled = true;
+    try {
+      const content = new TextDecoder("utf-8", { fatal: true }).decode(await file.arrayBuffer());
+      if (version !== fileVersion || !editor.open) return;
+      textInput.value = content.replace(/^\uFEFF/, ""); updateCount();
+    } catch (_) {
+      errorEl.textContent = "文件读取失败，请使用 UTF-8 编码的文本文件";
+    } finally {
+      if (version === fileVersion) saveButton.disabled = false;
+    }
+  });
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (saving) return;
+    errorEl.textContent = "";
+    const lines = topicLines();
+    if (!lines.length || lines.length > 200 || lines.some(t => t.length > 500)) {
+      errorEl.textContent = "请填写 1–200 条选题，每条不超过 500 字"; return;
+    }
+    const category = categoryInput.value.trim();
+    const group = groupInput.value.trim();
+    const known = new Set(data.categories.find(c => c.name === category)?.groups.find(g => g.name === group)?.topics || []);
+    const topics = [...new Set(lines)].filter(t => !known.has(t));
+    if (!topics.length) { errorEl.textContent = "这些选题已在此分类和分组中，无需重复添加"; return; }
+    saving = true; saveButton.disabled = true; cancelButton.disabled = true;
+    saveButton.textContent = "保存中…";
+    try {
+      const result = await topicRequest({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ category, group, topics }) });
+      state.category = "all"; state.group = ""; state.query = ""; searchEl.value = "";
+      state.hideDone = false; hideDoneEl.setAttribute("aria-pressed", "false"); writeStorage();
+      mergeCustom(result);
+      state.category = data.categories.find(c => c.name === category).id;
+      state.group = group; renderAll();
+      editor.close();
+      showToast(`已保存 ${result.added} 条选题，跳过 ${lines.length - result.added} 条重复项`);
+    } catch (error) {
+      errorEl.textContent = error.message;
+    } finally {
+      saving = false; saveButton.disabled = false; cancelButton.disabled = false;
+      saveButton.textContent = "保存选题";
+    }
+  });
+  topicRequest().then(mergeCustom).catch(() => showToast("自建选题读取失败，请刷新重试；原有选题仍可查看", true));
 
   readStorage();
   hideDoneEl.setAttribute("aria-pressed", String(state.hideDone));

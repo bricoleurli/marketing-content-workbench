@@ -16,6 +16,6 @@ jobs:
         with:
           node-version: '22'
       - run: pip install -r requirements.txt
-      - run: python -m py_compile server.py overlay_store.py overlay_components.py
-      - run: node --check static/overlay-components.js && node --check static/overlays.js
+      - run: python -m py_compile server.py overlay_store.py overlay_components.py topic_store.py
+      - run: node --check static/overlay-components.js && node --check static/overlays.js && node --check static/topics.js
       - run: python -m unittest discover tests
