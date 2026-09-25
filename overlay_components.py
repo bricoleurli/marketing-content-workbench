@@ -70,6 +70,7 @@ class ParamSpec:
     cli: bool = True
     kind: str = "number"
     choices: tuple = ()
+    labels: tuple = ()
 
 
 @dataclass(frozen=True)
@@ -142,6 +143,7 @@ class OverlayComponent:
                     "unit": item.unit,
                     "kind": item.kind,
                     "choices": list(item.choices),
+                    "labels": list(item.labels),
                 }
             )
         return knobs
@@ -351,7 +353,7 @@ FILMSTRIP = OverlayComponent(
         ParamSpec("cardWidth", "卡片宽度", 200, 480, 320, 4, "px", True),
         ParamSpec("radius", "圆角", 0, 48, 16, 1, "px", True),
         ParamSpec("speed", "速度", 60, 600, 240, 10, "px/s", True),
-        ParamSpec("direction", "方向", -1, 1, -1, 2, "", True, kind="choice", choices=(-1, 1)),
+        ParamSpec("direction", "方向", -1, 1, -1, 2, "", True, kind="choice", choices=(-1, 1), labels=("向左", "向右")),
         ParamSpec("stripY", "横带高度", 300, 1300, 640, 1, "px", True, knob=False),
         ParamSpec("gap", "间距", 12, 90, 40, 1, "px", True),
         ParamSpec("hold", "总时长", 0.8, 6.0, 3.0, 0.1, "s"),
@@ -386,6 +388,32 @@ FAN_SPREAD = OverlayComponent(
     ),
 )
 
+CARD_WALL = OverlayComponent(
+    id="card_wall",
+    title="斜漂卡片墙",
+    hint="截图铺成倾斜照片墙并匀速漂移，可整体压暗当文字背景墙。拖动改倾斜角",
+    default_title="未命名卡片墙",
+    slot_count=16,
+    min_images=3,
+    script_name="card_wall.py",
+    count_key="cardCount",
+    params=(
+        ParamSpec("landscape", "横版 16:9", 0, 1, 0, 1, "", True, kind="bool"),
+        ParamSpec("cardCount", "张数", 4, 16, 12, 1, "张", True),
+        ParamSpec("cardWidth", "卡片宽度", 160, 480, 300, 4, "px", True),
+        ParamSpec("radius", "圆角", 0, 48, 16, 1, "px", True),
+        ParamSpec("gap", "间隙", 6, 60, 14, 1, "px", True),
+        ParamSpec("angle", "倾斜角", 0, 30, 8, 1, "°", True),
+        ParamSpec("speed", "漂移速度", 0, 400, 75, 5, "px/s", True),
+        ParamSpec("direction", "方向", -1, 1, -1, 2, "", True, kind="choice", choices=(-1, 1), labels=("向左下", "向右上")),
+        ParamSpec("cardMode", "卡片比例", 0, 2, 1, 1, "", True, kind="choice", choices=(0, 1, 2), labels=("原图", "3:4", "16:9")),
+        ParamSpec("scrim", "压暗", 0, 90, 55, 1, "%", True),
+        ParamSpec("hold", "总时长", 0.8, 8.0, 4.0, 0.1, "s"),
+        ParamSpec("keepOriginal", "原图比例", default=True, knob=False, kind="bool"),
+        ParamSpec("fps", "帧率", 24, 30, 30, 1, "", True, knob=False, cli=False),
+    ),
+)
+
 COMPONENTS = {
     CASCADE_STACK.id: CASCADE_STACK,
     TILE_SPREAD.id: TILE_SPREAD,
@@ -395,6 +423,7 @@ COMPONENTS = {
     CARD_STACK.id: CARD_STACK,
     FILMSTRIP.id: FILMSTRIP,
     FAN_SPREAD.id: FAN_SPREAD,
+    CARD_WALL.id: CARD_WALL,
 }
 DEFAULT_COMPONENT_ID = CASCADE_STACK.id
 

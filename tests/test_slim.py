@@ -36,7 +36,7 @@ class SlimRoutesTest(unittest.TestCase):
                         self.assertEqual(r.status,200)
                     with urlopen(base+'/api/overlays') as r:
                         data=json.load(r)
-                        self.assertEqual(len(data['components']),8)
+                        self.assertEqual(len(data['components']),9)
                         self.assertEqual(len(data['instances']),1)
                 finally:
                     http.shutdown();t.join();http.server_close()

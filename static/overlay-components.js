@@ -186,6 +186,10 @@ function fxThrownCount(t, n, lead, interval, anim) {
   return thrown;
 }
 
+function periodColsFrom(cycle, periodW, cellW) {
+  return Math.round(periodW / cellW);
+}
+
 function fxRadiusStyle(params) {
   return `${Math.max(0, Number(params.radius) || 0)}px`;
 }
@@ -774,6 +778,123 @@ const OVERLAY_COMPONENTS = {
         zIndex: String(100 - Math.round(Math.abs(card.index - ((card.count || 5) - 1) / 2) * 10)),
         borderRadius: fxRadiusStyle(params),
       };
+    },
+  },
+  card_wall: {
+    id: "card_wall",
+    title: "斜漂卡片墙",
+    fillCards: true,
+    wallMetrics(params, images = []) {
+      const n = fxCount(params, images, 4, 16);
+      const cellW = params.cardWidth + params.gap;
+      const ratio = Number(params.cardMode) === 2 ? 16 / 9 : Number(params.cardMode) === 1 ? 3 / 4 : 0;
+      // 墙面循环使用「已上传」的图；一张都没传时退回占位格
+      const filled = (images || []).filter((im) => im?.url);
+      const cycle = filled.length ? filled.length : n;
+      const heights = Array.from({ length: cycle }, (_, i) => {
+        if (ratio) return Math.round(params.cardWidth / ratio);
+        const im = filled[i];
+        return im?.width && im?.height
+          ? Math.round((params.cardWidth * im.height) / im.width)
+          : Math.round(params.cardWidth * (16 / 9));
+      });
+      const cellH = Math.max(...heights, 1) + params.gap;
+      const W = OVERLAY_CANVAS.width;
+      const H = OVERLAY_CANVAS.height;
+      const theta = ((Number(params.angle) || 0) * Math.PI) / 180;
+      const extentU = W * Math.abs(Math.cos(theta)) + H * Math.abs(Math.sin(theta));
+      const extentV = W * Math.abs(Math.sin(theta)) + H * Math.abs(Math.cos(theta));
+      const colsNeeded = Math.ceil(extentU / cellW) + 1;
+      // 回绕周期取 cycle 的整数倍：回绕瞬间每张卡都落在同图卡的格位上，画面无缝
+      const periodCols = cycle * Math.ceil(Math.max(cycle, colsNeeded) / cycle);
+      const periodW = periodCols * cellW;
+      const rowsNeeded = Math.ceil(extentV / cellH) + 1;
+      const row0 = -(rowsNeeded - 1) / 2;
+      return { cycle, cellW, cellH, heights, periodW, rowsNeeded, row0 };
+    },
+    layout(params, images = []) {
+      const W = OVERLAY_CANVAS.width;
+      const H = OVERLAY_CANVAS.height;
+      const { cycle, cellW, cellH, heights, periodW, rowsNeeded, row0 } = this.wallMetrics(params, images);
+      const theta = ((Number(params.angle) || 0) * Math.PI) / 180;
+      const ux = Math.cos(theta);
+      const uy = -Math.sin(theta);
+      const vx = Math.sin(theta);
+      const vy = Math.cos(theta);
+      const filledIndices = images.map((image, index) => image?.url ? index : -1).filter(index => index >= 0);
+      const cards = [];
+      for (let r = 0; r < rowsNeeded; r += 1) {
+        // 奇偶行反向漂移；奇数行错开半格；每行从第 1 张开始循环
+        const dirR = (Number(params.direction) || -1) * (r % 2 === 0 ? 1 : -1);
+        const stagger = r % 2 ? cellW / 2 : 0;
+        const rowOff = (row0 + r) * cellH;
+        for (let c = 0; c < periodColsFrom(cycle, periodW, cellW); c += 1) {
+          const imageIndex = c % cycle;
+          const w = params.cardWidth;
+          const h = heights[imageIndex];
+          const u0 = c * cellW + stagger;
+          const u = (((u0 % periodW) + periodW) % periodW);
+          const du = u - periodW / 2;
+          const cx = W / 2 + du * ux + rowOff * vx;
+          const cy = H / 2 + du * uy + rowOff * vy;
+          // Keep offscreen cards: they drift into view later in the animation.
+          cards.push({
+            x: cx - w / 2,
+            y: cy - h / 2,
+            w,
+            h,
+            start: 0,
+            u0,
+            rowOff,
+            dirR,
+            pW: periodW,
+            slot: (filledIndices[imageIndex] ?? imageIndex) + 1,
+          });
+        }
+      }
+      return cards;
+    },
+    editLayout(params, images = []) {
+      return this.layout(params, images);
+    },
+    duration(params) {
+      return Math.max(0.8, Number(params.hold) || 4);
+    },
+    playTarget() {
+      return 0;
+    },
+    applyDrag(params, drag, x, y) {
+      if (!drag._base) drag._base = { angle: Number(params.angle) || 0 };
+      const dx = x + (drag.offsetX || 0) - drag.startX;
+      return { ...params, angle: Math.round(Math.max(0, Math.min(30, drag._base.angle + dx / 8))) };
+    },
+    cardStyle(card, params, playhead) {
+      const theta = ((Number(params.angle) || 0) * Math.PI) / 180;
+      const ux = Math.cos(theta);
+      const uy = -Math.sin(theta);
+      const vx = Math.sin(theta);
+      const vy = Math.cos(theta);
+      const drift = card.dirR * (Number(params.speed) || 0) * playhead;
+      const u = (((card.u0 - drift) % card.pW) + card.pW) % card.pW;
+      const du = u - card.pW / 2;
+      const cx = OVERLAY_CANVAS.width / 2 + du * ux + card.rowOff * vx;
+      const cy = OVERLAY_CANVAS.height / 2 + du * uy + card.rowOff * vy;
+      const scrim = Math.max(0, Math.min(90, Number(params.scrim) || 0)) / 100;
+      const brightness = 1 - scrim * 0.85;
+      return {
+        left: fxPct(cx - card.w / 2, OVERLAY_CANVAS.width),
+        top: fxPct(cy - card.h / 2, OVERLAY_CANVAS.height),
+        width: fxPct(card.w, OVERLAY_CANVAS.width),
+        height: fxPct(card.h, OVERLAY_CANVAS.height),
+        opacity: 1,
+        transform: `rotate(${-(Number(params.angle) || 0)}deg)`,
+        filter: brightness < 0.99 ? `brightness(${brightness.toFixed(3)})` : "none",
+        zIndex: "5",
+        borderRadius: fxRadiusStyle(params),
+      };
+    },
+    editCardStyle(card, params) {
+      return this.cardStyle(card, params, 0);
     },
   },
 };

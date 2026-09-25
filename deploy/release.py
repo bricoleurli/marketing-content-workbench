@@ -44,7 +44,7 @@ try:
     for attempt in range(30):
         try:
             with urllib.request.urlopen('http://127.0.0.1:8876/api/overlays',timeout=3) as response:
-                assert len(json.load(response)['components'])==8
+                assert len(json.load(response)['components'])==9
             break
         except Exception:
             if attempt==29: raise

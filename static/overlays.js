@@ -294,6 +294,10 @@ function renderSlots() {
 function formatKnobValue(knob, value) {
   const number = Number(value);
   if (knob.key === "landSlot" && number <= 0) return "最后一张";
+  if (knob.labels?.length) {
+    const index = (knob.choices || []).findIndex((choice) => Number(choice) === number);
+    if (index >= 0 && knob.labels[index]) return knob.labels[index];
+  }
   const text = String(knob.step).includes(".") ? number.toFixed(2).replace(/0+$/, "").replace(/\.$/, "") : String(Math.round(number));
   return `${text}${knob.unit || ""}`;
 }
@@ -319,9 +323,10 @@ function renderKnobs() {
       }
       if (knob.kind === "choice") {
         const buttons = (knob.choices || [])
-          .map((choice) => {
+          .map((choice, choiceIndex) => {
             const active = Number(value) === Number(choice) ? " is-active" : "";
-            return `<button type="button" class="overlay-choice${active}" data-key="${escapeHtml(knob.key)}" data-value="${choice}">${choice}${escapeHtml(knob.unit || "")}</button>`;
+            const label = (knob.labels || [])[choiceIndex] ?? `${choice}${knob.unit || ""}`;
+            return `<button type="button" class="overlay-choice${active}" data-key="${escapeHtml(knob.key)}" data-value="${choice}">${escapeHtml(String(label))}</button>`;
           })
           .join("");
         return `<div class="overlay-knob">
@@ -508,7 +513,7 @@ function paintStage(target, playhead, editable) {
         : engine.cardStyle({ ...card, index }, params, playhead, instance.images);
     const cls = [
       editable ? "overlay-card" : "overlay-card is-preview",
-      engine.id === "rapid_montage" ? "is-stage-fill" : "",
+      engine.id === "rapid_montage" ? "is-stage-fill" : engine.fillCards ? "is-fill-cover" : "",
     ]
       .filter(Boolean)
       .join(" ");

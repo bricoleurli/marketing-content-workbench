@@ -2,7 +2,7 @@
 
 本目录是独立项目。修改前读取当前文件，不依赖其他工作区的历史记忆。
 
-保留：素材总览、选题库、配音、事件镜头、八种叠加模板和浏览器实时预览。
+保留：素材总览、选题库、配音、事件镜头、九种叠加模板和浏览器实时预览。
 不包含：旧 Studio、快速拼接、Whisper 转写。图片快切模板 rapid_montage 仍保留。
 
 代码：server.py、overlay_store.py、overlay_components.py、static/、renderers/。
