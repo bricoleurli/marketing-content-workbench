@@ -8,7 +8,7 @@
     "/overlays": ["/api/overlays"],
   };
   const routeTitles = {
-    "/library": "素材库",
+    "/library": "素材总览",
     "/topics": "选题库",
     "/voiceover": "口播配音",
     "/clips": "事件镜头",
@@ -26,6 +26,8 @@
     const url = new URL(value, window.location.origin);
     const path = url.pathname.replace(/\/$/, "") || "/";
     if (path === "/") return "/library";
+    const aliases = { "/library.html": "/library", "/topics.html": "/topics", "/index.html": "/voiceover", "/clips.html": "/clips", "/overlays.html": "/overlays" };
+    if (aliases[path]) return aliases[path];
     return routes.has(path) ? path : null;
   }
 
@@ -146,26 +148,6 @@
 
   function installEmbeddedStyles() {
     document.documentElement.dataset.workbenchEmbedded = "true";
-    const style = document.createElement("style");
-    style.dataset.workbenchEmbedded = "true";
-    style.textContent = `
-      html, body { width: 100%; height: 100%; }
-      body { overflow: hidden !important; }
-      /* 素材总览和选题库是文档流长页面，靠整页滚动；其余工作台页面在面板内滚动。 */
-      body.library-page, body.topics-page { overflow-y: auto !important; }
-      .studio-nav, .app-sidebar-nav { display: none !important; }
-      .studio-shell { grid-template-columns: minmax(0, 1fr) !important; }
-      .topbar { justify-content: flex-end; }
-      .topbar .brand-lockup, .topbar .page-nav { display: none !important; }
-      .studio-main { min-width: 0; }
-      @media (max-width: 720px) {
-        body { overflow-y: auto !important; }
-      }
-      @media (max-width: 1050px) {
-        .app-shell { grid-template-columns: minmax(0, 1fr) !important; }
-      }
-    `;
-    document.head.appendChild(style);
   }
 
   function installEmbeddedNavigation() {
@@ -176,6 +158,7 @@
       document.documentElement.dataset.workbenchActive = event.data.active ? "true" : "false";
       if (!event.data.active) {
         document.querySelectorAll("audio, video").forEach((media) => media.pause());
+        document.querySelectorAll("dialog[open]").forEach((dialog) => dialog.close());
       }
     });
     document.addEventListener("click", (event) => {
@@ -189,152 +172,22 @@
     });
   }
 
-  function hostStyles() {
-    const style = document.createElement("style");
-    style.dataset.workbenchHost = "true";
-    style.textContent = `
-      html.workbench-host-document, html.workbench-host-document body {
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        overflow: hidden;
-        background: #0d0e10;
-      }
-      .workbench-host {
-        display: grid;
-        grid-template-columns: 184px minmax(0, 1fr);
-        width: 100%;
-        height: 100dvh;
-        background: #0d0e10;
-      }
-      .workbench-host-nav {
-        display: flex;
-        min-height: 0;
-        flex-direction: column;
-        border-right: 1px solid #25282c;
-        background: #101113;
-        color: #f3f4f4;
-        font-family: "DM Sans", "Noto Sans SC", sans-serif;
-      }
-      .workbench-host-brand {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        height: 64px;
-        padding: 0 16px;
-        color: #f3f4f4;
-        text-decoration: none;
-      }
-      .workbench-host-brand-mark {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 2px;
-        width: 30px;
-        height: 30px;
-        flex: 0 0 auto;
-        border-radius: 5px;
-        background: #f3f4f4;
-      }
-      .workbench-host-brand-mark i {
-        display: block;
-        width: 2px;
-        border-radius: 2px;
-        background: #f05252;
-      }
-      .workbench-host-brand-mark i:nth-child(1), .workbench-host-brand-mark i:nth-child(5) { height: 7px; }
-      .workbench-host-brand-mark i:nth-child(2), .workbench-host-brand-mark i:nth-child(4) { height: 14px; }
-      .workbench-host-brand-mark i:nth-child(3) { height: 20px; }
-      .workbench-host-brand strong, .workbench-host-brand small { display: block; letter-spacing: 0; }
-      .workbench-host-brand strong { font-size: 14px; font-weight: 700; }
-      .workbench-host-brand small { margin-top: 1px; color: #8b9097; font-size: 10px; }
-      .workbench-host-nav nav {
-        display: flex;
-        min-height: 0;
-        flex: 1;
-        flex-direction: column;
-        gap: 3px;
-        padding: 18px 10px;
-        overflow-y: auto;
-      }
-      .workbench-host-section-label {
-        display: block;
-        margin: 10px 12px 4px;
-        color: #555a61;
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: .08em;
-        line-height: 16px;
-        text-transform: uppercase;
-      }
-      .workbench-host-section-label:first-child { margin-top: 0; }
-      .workbench-host-nav a, .workbench-host-settings {
-        display: flex;
-        align-items: center;
-        gap: 11px;
-        min-height: 42px;
-        padding: 0 12px;
-        border: 0;
-        border-radius: 6px;
-        background: transparent;
-        color: #a8abb0;
-        font: inherit;
-        font-size: 13px;
-        font-weight: 600;
-        text-decoration: none;
-        cursor: pointer;
-        transition: background 140ms ease, color 140ms ease;
-      }
-      .workbench-host-nav a svg, .workbench-host-settings svg { width: 17px; height: 17px; flex: 0 0 auto; }
-      .workbench-host-nav a:hover, .workbench-host-settings:hover { background: #1d2023; color: #f3f4f4; }
-      .workbench-host-nav a.is-active { background: #2b1d20; color: #ff6863; }
-      .workbench-host-nav a.is-active svg { color: #f05252; }
-      .workbench-host-settings {
-        margin: auto 10px 14px;
-        border-top: 1px solid #25282c;
-        border-radius: 0;
-        color: #777d86;
-      }
-      .workbench-host-frame {
-        grid-column: 2;
-        grid-row: 1;
-        display: block;
-        width: 100%;
-        height: 100%;
-        border: 0;
-        background: #0d0e10;
-      }
-      /* Author display:block overrides the browser default for [hidden]. */
-      .workbench-host-frame[hidden] { display: none !important; }
-      .workbench-host-nav :focus-visible { outline: 2px solid #f05252; outline-offset: 2px; }
-      @media (max-width: 720px) {
-        .workbench-host { grid-template-columns: 64px minmax(0, 1fr); }
-        .workbench-host-brand { justify-content: center; padding: 0; }
-        .workbench-host-brand > span:last-child, .workbench-host-section-label, .workbench-host-nav a span { display: none; }
-        .workbench-host-nav nav { padding: 14px 8px; }
-        .workbench-host-nav a, .workbench-host-settings { justify-content: center; padding: 0; }
-        .workbench-host-settings { margin: auto 8px 10px; }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
   function hostNavMarkup(currentRoute) {
     const active = (route) => (route === currentRoute ? ' class="is-active" aria-current="page"' : "");
     return `
       <aside class="workbench-host-nav" aria-label="工作台功能">
-        <a class="workbench-host-brand" href="/library" aria-label="素材库">
-          <span class="workbench-host-brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
-          <span><strong>素材库</strong><small>营销内容</small></span>
+        <a class="workbench-host-brand" href="/library" aria-label="营销工作台首页">
+          <span class="workbench-host-brand-mark" aria-hidden="true"><i data-lucide="panels-top-left"></i></span>
+          <span><strong>营销工作台</strong><small>内容创作与素材管理</small></span>
         </a>
         <nav>
-          <span class="workbench-host-section-label">素材库</span>
-          <a href="/library"${active("/library")}><i data-lucide="library"></i><span>素材总览</span></a>
-          <a href="/topics"${active("/topics")}><i data-lucide="lightbulb"></i><span>选题库</span></a>
+          <span class="workbench-host-section-label">内容与素材</span>
+          <a href="/library" title="素材总览"${active("/library")}><i data-lucide="library"></i><span>素材总览</span></a>
+          <a href="/topics" title="选题库"${active("/topics")}><i data-lucide="lightbulb"></i><span>选题库</span></a>
           <span class="workbench-host-section-label">生产入口</span>
-          <a href="/voiceover"${active("/voiceover")}><i data-lucide="audio-lines"></i><span>口播配音</span></a>
-          <a href="/clips"${active("/clips")}><i data-lucide="film"></i><span>事件镜头</span></a>
-          <a href="/overlays"${active("/overlays")}><i data-lucide="layers-3"></i><span>叠加模板</span></a>
+          <a href="/voiceover" title="口播配音"${active("/voiceover")}><i data-lucide="audio-lines"></i><span>口播配音</span></a>
+          <a href="/clips" title="事件镜头"${active("/clips")}><i data-lucide="film"></i><span>事件镜头</span></a>
+          <a href="/overlays" title="叠加模板"${active("/overlays")}><i data-lucide="layers-3"></i><span>叠加模板</span></a>
         </nav>
         <button class="workbench-host-settings" type="button" title="设置" aria-label="设置">
           <i data-lucide="settings-2"></i><span>设置</span>
@@ -364,10 +217,22 @@
     const initialRoute = normalizePath(window.location.href) || "/library";
     if (!normalizePath(window.location.href)) window.history.replaceState({}, "", "/library");
 
-    hostStyles();
     const host = document.createElement("div");
     host.className = "workbench-host";
-    host.innerHTML = hostNavMarkup(initialRoute);
+    host.innerHTML = `<a class="workbench-skip" href="#workbenchContent">跳到内容</a>${hostNavMarkup(initialRoute)}
+      <header class="workbench-host-header"><h1 id="workbenchPageTitle"></h1><p id="workbenchPageDescription"></p></header>
+      <dialog class="workbench-settings-dialog" aria-labelledby="workbenchSettingsTitle">
+        <form id="workbenchSettingsForm">
+          <div class="dialog-header"><h2 id="workbenchSettingsTitle">配音设置</h2><button class="icon-button" type="button" data-settings-close aria-label="关闭设置"><i data-lucide="x"></i></button></div>
+          <p class="workbench-settings-status" role="status">正在读取配置…</p>
+          <label class="field-label" for="workbenchApiKey">Fish Audio API Key</label>
+          <div class="secret-input"><input id="workbenchApiKey" type="password" autocomplete="off" placeholder="粘贴密钥以新增或替换" /><button class="icon-button" id="workbenchKeyToggle" type="button" aria-label="显示密钥" aria-pressed="false"><i data-lucide="eye"></i></button></div>
+          <p class="field-help">密钥保存在当前工作台的私有配置中，页面不会显示已存密钥。音色在口播配音页管理。</p>
+          <p class="workbench-settings-error" role="alert"></p>
+          <div class="dialog-actions"><button class="text-button" type="button" data-settings-close>取消</button><button class="primary-button" id="workbenchSaveSettings" type="submit">保存设置</button></div>
+        </form>
+      </dialog>
+      <div class="workbench-settings-notice" role="status" hidden></div>`;
     document.body.replaceChildren(host);
     document.documentElement.classList.add("workbench-host-document");
     document.body.style.visibility = "visible";
@@ -382,7 +247,8 @@
       if (!record) {
         const frame = document.createElement("iframe");
         frame.className = "workbench-host-frame";
-        frame.title = routeTitles[route] || "营销内容工作台";
+        frame.title = routeTitles[route] || "营销工作台";
+        frame.tabIndex = 0;
         frame.referrerPolicy = "same-origin";
         frame.hidden = true;
         frame.setAttribute("aria-hidden", "true");
@@ -406,10 +272,22 @@
         candidate.contentWindow?.postMessage({ type: "workbench:visibility", active }, window.location.origin);
       });
       activeFrame = frame;
+      frame.id = "workbenchContent";
+      frames.forEach(({ frame: other }) => { if (other !== frame) other.removeAttribute("id"); });
     }
 
     function updateActive(route) {
-      nav.querySelectorAll("a[href]").forEach((link) => {
+      const descriptions = {
+        "/library": "搜索、挑选并打包可复用的创作素材",
+        "/topics": "按分类和分组挑选选题，记录使用进度",
+        "/voiceover": "编辑口播文案、选择音色并管理配音",
+        "/clips": "按事件整理镜头，预览和管理素材",
+        "/overlays": "排列图片、调整节奏并导出叠加素材",
+      };
+      host.querySelector("#workbenchPageTitle").textContent = routeTitles[route];
+      host.querySelector("#workbenchPageDescription").textContent = descriptions[route];
+      document.title = `${routeTitles[route]} · 营销工作台`;
+      nav.querySelectorAll("nav a[href]").forEach((link) => {
         const isActive = normalizePath(link.href) === route;
         link.classList.toggle("is-active", isActive);
         if (isActive) link.setAttribute("aria-current", "page");
@@ -433,6 +311,77 @@
       warmRoute(route);
       showFrame(ensureFrame(route, url));
     }
+
+    const settingsDialog = host.querySelector(".workbench-settings-dialog");
+    const keyInput = host.querySelector("#workbenchApiKey");
+    const settingsError = host.querySelector(".workbench-settings-error");
+    const settingsStatus = host.querySelector(".workbench-settings-status");
+    const saveSettingsButton = host.querySelector("#workbenchSaveSettings");
+    const keyToggle = host.querySelector("#workbenchKeyToggle");
+    let settingsEpoch = 0;
+    let noticeTimer;
+    async function settingsRequest(path, options) {
+      const response = await fetch(path, { cache: "no-store", credentials: "same-origin", ...options });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || (response.status === 403 ? "此站点限制修改配音设置，请使用本地工作台。" : `请求失败（${response.status}），请稍后重试。`));
+      return data;
+    }
+    nav.querySelector(".workbench-host-settings").addEventListener("click", async () => {
+      settingsError.textContent = "";
+      settingsStatus.textContent = "正在读取配置…";
+      settingsDialog.showModal();
+      const epoch = ++settingsEpoch;
+      try {
+        const config = await settingsRequest("/api/config");
+        if (epoch !== settingsEpoch) return;
+        settingsStatus.textContent = config.keyConfigured ? "已配置密钥，可填写新密钥替换。" : "尚未配置密钥，生成配音前请先配置。";
+      } catch (error) {
+        if (epoch === settingsEpoch) settingsStatus.textContent = error.message;
+      }
+    });
+    host.querySelectorAll("[data-settings-close]").forEach((button) => button.addEventListener("click", () => settingsDialog.close()));
+    settingsDialog.addEventListener("close", () => {
+      settingsEpoch += 1;
+      keyInput.value = "";
+      keyInput.type = "password";
+      keyToggle.setAttribute("aria-pressed", "false");
+      keyToggle.setAttribute("aria-label", "显示密钥");
+    });
+    keyToggle.addEventListener("click", () => {
+      const visible = keyInput.type === "password";
+      keyInput.type = visible ? "text" : "password";
+      keyToggle.setAttribute("aria-pressed", String(visible));
+      keyToggle.setAttribute("aria-label", visible ? "隐藏密钥" : "显示密钥");
+    });
+    host.querySelector("#workbenchSettingsForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const apiKey = keyInput.value.trim();
+      if (apiKey.length < 20) {
+        settingsError.textContent = "请填写有效的 Fish Audio API Key（至少20个字符）。";
+        keyInput.focus();
+        return;
+      }
+      saveSettingsButton.disabled = true;
+      saveSettingsButton.textContent = "正在保存…";
+      settingsError.textContent = "";
+      try {
+        await settingsRequest("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ apiKey }) });
+        window.workbenchClearPrefetch();
+        frames.forEach(({ frame }) => frame.contentWindow?.postMessage({ type: "workbench:config-changed" }, window.location.origin));
+        settingsDialog.close();
+        const notice = host.querySelector(".workbench-settings-notice");
+        notice.textContent = "配音设置已保存";
+        notice.hidden = false;
+        clearTimeout(noticeTimer);
+        noticeTimer = setTimeout(() => { notice.hidden = true; }, 3000);
+      } catch (error) {
+        settingsError.textContent = error.message;
+      } finally {
+        saveSettingsButton.disabled = false;
+        saveSettingsButton.textContent = "保存设置";
+      }
+    });
+    host.querySelector(".workbench-skip").addEventListener("click", (event) => { event.preventDefault(); activeFrame?.focus(); });
 
     document.addEventListener("click", (event) => {
       if (event.defaultPrevented || isModifiedClick(event)) return;

@@ -41,6 +41,8 @@ python3 deploy/release.py --host YOUR_SSH_ALIAS
 
 脚本针对已初始化的 `/opt/marketing-workbench` 运行环境：独立 Python 环境和 FFmpeg/ffprobe、独立运行账号和数据目录，以及 `deploy/marketing-workbench.service`。依赖变化时先更新独立运行环境。新服务器也可以使用 Dockerfile，自行挂载私有数据卷。
 
+本机开发与发布工作台已登记此仓库，自动审查新 `codex/` PR，并提供最多三次有限修复。本地验证执行原 Python 编译、全部静态 JavaScript 语法检查和完整单元测试；审查报告绑定准确提交并同步到 GitHub。受保护配置、发布脚本和运行数据不自动修改。发布仍须单独执行上面的原命令；工作台的检查通过不代表线上已更新，发布后需核对服务器 `DEPLOYED_COMMIT` 与正式域名。
+
 服务配置上限为 1.5 核、2 GiB 内存，仅绑定 `127.0.0.1:8876`。对外使用还需设置 HTTPS 入口和身份验证；当前没有不同用户之间的素材隔离。
 
 ## 验证

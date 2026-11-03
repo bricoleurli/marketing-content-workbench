@@ -179,6 +179,9 @@ function renderStats() {
 }
 
 function renderGrid() {
+  document.querySelectorAll(".library-filter").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.filter === state.filter));
+  });
   const assets = visibleAssets();
   elements.resultCount.textContent = `${assets.length} 条素材`;
   elements.assetGrid.innerHTML = assets.map(cardMarkup).join("");

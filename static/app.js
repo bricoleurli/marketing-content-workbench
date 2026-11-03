@@ -226,7 +226,7 @@ async function saveSettings() {
     setConnectionStatus(Boolean(data.keyConfigured));
     elements.apiKeyInput.value = "";
     elements.settingsDialog.close();
-    showToast("API Key 已保存在本机");
+    showToast("API Key 已保存在当前工作台");
   } catch (error) {
     showToast(error.message, "error");
   } finally {
@@ -348,4 +348,9 @@ elements.toggleKeyButton.addEventListener("click", () => {
 refreshIcons();
 updateEditorMeta();
 loadConfig();
+
+window.addEventListener("message", (event) => {
+  if (event.origin === window.location.origin && event.data?.type === "workbench:config-changed") loadConfig();
+});
+
 }

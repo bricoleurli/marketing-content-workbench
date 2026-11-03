@@ -138,7 +138,7 @@
       .map(
         (cell) => `
           <button class="topics-stat${state.category === cell.id ? " is-active" : ""}" type="button"
-            data-category="${cell.id}" title="${escapeHtml(cell.note || "")}">
+            aria-pressed="${state.category === cell.id}" data-category="${cell.id}" title="${escapeHtml(cell.note || "")}">
             <span>${escapeHtml(cell.name)}</span>
             <strong>${cell.count}</strong>
             <small>${cell.id === "all" ? "点分类查看" : escapeHtml(cell.note)}</small>
@@ -153,12 +153,12 @@
       if (state.category !== "all" && state.category !== category.id) return;
       category.groups.forEach((group) => groups.push(group.name));
     });
-    const chips = [{ value: "", label: "全部分组" }, ...groups.map((name) => ({ value: name, label: name }))];
+    const chips = [{ value: "", label: "全部分组" }, ...[...new Set(groups)].map((name) => ({ value: name, label: name }))];
     filtersEl.innerHTML = `${chips
       .map(
         (chip) =>
           `<button class="topics-filter${state.group === chip.value ? " is-active" : ""}" type="button"
-            role="tab" data-group="${escapeHtml(chip.value)}">${escapeHtml(chip.label)}</button>`,
+            aria-pressed="${state.group === chip.value}" data-group="${escapeHtml(chip.value)}">${escapeHtml(chip.label)}</button>`,
       )
       .join("")}`;
   }
@@ -204,7 +204,7 @@
       sections.push(
         `<section class="topics-cat">
           <div class="topics-cat-head">
-            <h3>${escapeHtml(category.numeral)}、${escapeHtml(category.name)}</h3>
+            <h3>${escapeHtml(category.name)}</h3>
             <span class="topics-cat-note">${escapeHtml(category.note)}</span>
             <span class="topics-cat-count">${categoryTotal} 条</span>
           </div>
