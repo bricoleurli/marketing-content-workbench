@@ -13,6 +13,7 @@ const state = {
   playhead: 0,
   editPlayhead: 0,
   playing: false,
+  rendering: false,
   lastFrame: 0,
 };
 
@@ -849,6 +850,13 @@ function stopComponentDemos() {
 function renderAll() {
   renderList();
   renderComponentMenu();
+  const noCurrent = !state.current;
+  [elements.overlayTitle, elements.batchUploadButton, elements.previewPlayButton,
+    elements.previewRestartButton, elements.duplicateButton, elements.deleteButton,
+    elements.toolbarPublishButton].forEach((control) => { control.disabled = noCurrent; });
+  [elements.renderButton, elements.toolbarRenderButton, document.querySelector("#exportFormat")]
+    .forEach((control) => { control.disabled = noCurrent || state.rendering; });
+  document.querySelector("#overlaySaveState").textContent = noCurrent ? "先新建或选择一条模板" : "编辑中 · 自动保存";
   if (!state.current) {
     elements.overlayTitle.value = "";
     if (elements.overlayType) elements.overlayType.textContent = "叠加模板";
@@ -1462,7 +1470,9 @@ document.querySelector("#exportFormat").addEventListener("change", () => {
 
 elements.renderButton.addEventListener("click", async () => {
   if (!state.currentId) return;
+  state.rendering = true;
   elements.renderButton.disabled = true;
+  elements.toolbarRenderButton.disabled = true;
   document.querySelector("#exportFormat").disabled = true;
   elements.renderButton.querySelector("span").textContent = "导出中…";
   try {
@@ -1490,8 +1500,10 @@ elements.renderButton.addEventListener("click", async () => {
   } catch (error) {
     showToast(error.message, "error");
   } finally {
-    elements.renderButton.disabled = false;
-    document.querySelector("#exportFormat").disabled = false;
+    state.rendering = false;
+    elements.renderButton.disabled = !state.current;
+    elements.toolbarRenderButton.disabled = !state.current;
+    document.querySelector("#exportFormat").disabled = !state.current;
     const hasBackground = Boolean(state.current?.hasBackground && state.current?.background?.url);
     elements.renderButton.querySelector("span").textContent = document.querySelector("#exportFormat").value === "webm" ? "导出 WebM" : "导出 MP4";
     refreshIcons();

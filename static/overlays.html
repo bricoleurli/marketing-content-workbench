@@ -3,15 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0d0e10" />
-    <title>叠加模板 · 素材库</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/styles.css?v=dark-workbench-wall1" />
+    <meta name="theme-color" content="#EFF8F1" />
+    <title>叠加模板 · 营销工作台</title>
+    <link rel="stylesheet" href="/styles.css?v=island6" />
+    <link rel="stylesheet" href="/workbench-theme.css?v=island6" />
   </head>
   <body class="overlays-page">
     <svg class="overlay-ripple-defs" width="0" height="0" aria-hidden="true" focusable="false">
@@ -65,14 +60,14 @@
         <div class="voice-list" id="overlayList"></div>
         <div class="sidebar-note">
           <i data-lucide="layers"></i>
-          <span>一条叠加模板就是一套图 + 一套参数。新组件加到目录里，不用新开页面。</span>
+          <span>保存一套图片和参数，之后可继续调整和导出。</span>
         </div>
       </aside>
 
       <main class="workspace overlays-stage">
         <div class="overlay-toolbar">
           <div class="overlay-toolbar-context">
-            <span class="toolbar-dot"></span> 编辑中 · 自动保存
+            <span class="toolbar-dot"></span><span id="overlaySaveState">正在读取模板…</span>
           </div>
           <div class="overlay-toolbar-actions">
             <button class="toolbar-button" id="toolbarPublishButton" type="button"><i data-lucide="send"></i><span>加入事件镜头</span></button>
@@ -82,7 +77,7 @@
         <div class="overlay-stage-meta">
           <div>
             <p class="eyebrow" id="overlayType">叠加模板</p>
-            <input id="overlayTitle" class="overlay-title" type="text" maxlength="40" placeholder="给这条叠加模板起个名字" />
+            <input id="overlayTitle" aria-label="模板名称" class="overlay-title" type="text" maxlength="40" placeholder="给这条叠加模板起个名字" />
           </div>
           <p class="result-detail" id="overlayHint">全屏硬切。左侧拖拽调顺序，右侧实时看成片效果。</p>
         </div>
@@ -189,9 +184,9 @@
     <input id="batchFileInput" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden />
     <input id="musicFileInput" type="file" accept="audio/mpeg,audio/mp4,audio/wav,audio/aac,audio/ogg,.mp3,.m4a,.wav,.aac,.ogg" hidden />
     <div class="toast" id="toast" role="status"></div>
-    <script src="/navigation.js?v=nav8"></script>
+    <script src="/navigation.js?v=island6"></script>
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
     <script src="/overlay-components.js?v=fx-wall-cloud1"></script>
-    <script src="/overlays.js?v=ondemand1-fx-wall-cloud1"></script>
+    <script src="/overlays.js?v=island6"></script>
   </body>
 </html>

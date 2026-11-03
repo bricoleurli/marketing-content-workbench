@@ -3,17 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0d0e10" />
-    <title>口播配音 · 素材库</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/styles.css?v=dark-workbench1" />
+    <meta name="theme-color" content="#EFF8F1" />
+    <title>口播配音 · 营销工作台</title>
+    <link rel="stylesheet" href="/styles.css?v=island6" />
+    <link rel="stylesheet" href="/workbench-theme.css?v=island6" />
   </head>
-  <body>
+  <body class="voiceover-page">
     <div class="app-shell">
       <header class="topbar">
         <div class="brand-lockup">
@@ -59,7 +54,7 @@
         <div class="voice-list" id="voiceList"></div>
         <div class="sidebar-note">
           <i data-lucide="lock-keyhole"></i>
-          <span>密钥只保存在这台电脑</span>
+          <span>密钥保存在当前工作台</span>
         </div>
       </aside>
 
@@ -68,14 +63,15 @@
           <div class="editor-header">
             <div>
               <p class="eyebrow">文案</p>
-              <h1>先把口播做出来</h1>
+              <h2>口播文案</h2>
             </div>
             <span class="character-count"><strong id="characterCount">0</strong> / <span id="characterLimit">500</span></span>
           </div>
           <textarea
             id="scriptInput"
+            aria-label="口播文案"
             maxlength="500"
-            placeholder="粘贴一段营销口播文案，生成后就能进入口播剪辑……"
+            placeholder="粘贴一段营销口播文案，选择音色和语速后生成配音。"
             spellcheck="false"
           ></textarea>
           <div class="controls-row">
@@ -153,7 +149,7 @@
             <i data-lucide="eye"></i>
           </button>
         </div>
-        <p class="field-help">保存后写入 <code>~/.config/fish-audio-workbench/</code>，网页无法读取完整密钥。</p>
+        <p class="field-help">密钥保存在当前工作台的私有配置中，网页无法读取完整密钥。</p>
         <div class="dialog-actions">
           <button class="text-button" type="button" data-close-dialog="settingsDialog">取消</button>
           <button class="primary-button compact" id="saveSettingsButton" type="button">保存设置</button>
@@ -187,8 +183,8 @@
 
     <div class="toast" id="toast" role="status"></div>
 
-    <script src="/navigation.js?v=nav8"></script>
+    <script src="/navigation.js?v=island6"></script>
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
-    <script src="/app.js"></script>
+    <script src="/app.js?v=island6"></script>
   </body>
 </html>
