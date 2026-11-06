@@ -78,6 +78,47 @@ class Harness:
 
 
 class FishRelayTest(unittest.TestCase):
+    def verify_isolated_write_failure(self, side):
+        a, b = socket.socketpair()
+        broken, abandoned = socket.socketpair()
+        healthy, receiver = socket.socketpair()
+        receiver.settimeout(2)
+        abandoned.close()
+        frames = relay.Frames(a.fileno(), a.fileno())
+        if side == 'server':
+            controller = relay.Bridge(frames)
+            controller.online.set()
+            for channel, connection in ((1, broken), (2, healthy)):
+                item = relay.Channel(connection)
+                item.accepted = True
+                controller.channels[channel] = item
+            target = controller.read_loop
+        else:
+            controller = relay.MacPeer(frames)
+            controller.channels.update({1: broken, 2: healthy})
+            target = controller.run
+        worker = threading.Thread(target=target, daemon=True)
+        worker.start()
+        try:
+            peer = relay.Frames(b.fileno(), b.fileno())
+            peer.send(relay.DATA, 1, b'closed socket')
+            peer.send(relay.DATA, 2, b'ok')
+            self.assertEqual(read_exact(receiver, 2), b'ok')
+            self.assertFalse(controller.closed.is_set())
+            self.assertNotIn(1, controller.channels)
+            self.assertIn(2, controller.channels)
+        finally:
+            controller.stop()
+            for connection in (a, b, broken, healthy, receiver):
+                relay.close_socket(connection)
+            worker.join(2)
+
+    def test_disconnected_client_does_not_close_other_channels(self):
+        self.verify_isolated_write_failure('server')
+
+    def test_disconnected_fish_socket_does_not_close_other_channels(self):
+        self.verify_isolated_write_failure('mac')
+
     def test_connect_carries_binary_payload_without_changing_it(self):
         with Harness() as harness:
             connection, response = harness.request()

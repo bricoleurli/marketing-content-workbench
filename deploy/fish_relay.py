@@ -147,7 +147,10 @@ class Bridge:
                 elif kind == FAILED:
                     item.ready.set()
                 elif kind == DATA and item.accepted:
-                    item.connection.sendall(payload)
+                    try:
+                        item.connection.sendall(payload)
+                    except OSError:
+                        self.drop(channel)
                 elif kind == CLOSE:
                     self.drop(channel, notify=False)
         except (OSError, EOFError, ValueError):
@@ -291,7 +294,10 @@ class MacPeer:
                     with self.lock:
                         connection = self.channels.get(channel)
                     if connection:
-                        connection.sendall(payload)
+                        try:
+                            connection.sendall(payload)
+                        except OSError:
+                            self.drop(channel)
                 elif kind == CLOSE:
                     self.drop(channel, notify=False)
         except (OSError, EOFError, ValueError):
