@@ -3,6 +3,7 @@ import contextlib
 import os
 import socket
 import threading
+import time
 import unittest
 
 from deploy import fish_relay as relay
@@ -105,6 +106,9 @@ class FishRelayTest(unittest.TestCase):
             peer.send(relay.DATA, 2, b'ok')
             self.assertEqual(read_exact(receiver, 2), b'ok')
             self.assertFalse(controller.closed.is_set())
+            deadline = time.monotonic() + 2
+            while 1 in controller.channels and time.monotonic() < deadline:
+                time.sleep(.005)
             self.assertNotIn(1, controller.channels)
             self.assertIn(2, controller.channels)
         finally:
@@ -118,6 +122,79 @@ class FishRelayTest(unittest.TestCase):
 
     def test_disconnected_fish_socket_does_not_close_other_channels(self):
         self.verify_isolated_write_failure('mac')
+
+    def verify_slow_channel_isolation(self, side):
+        a, b = socket.socketpair()
+        blocked, unread = socket.socketpair()
+        healthy, receiver = socket.socketpair()
+        blocked.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1024)
+        unread.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024)
+        receiver.settimeout(2)
+        frames = relay.Frames(a.fileno(), a.fileno())
+        if side == 'server':
+            controller = relay.Bridge(frames)
+            controller.online.set()
+            for channel, connection in ((1, blocked), (2, healthy)):
+                item = relay.Channel(connection)
+                item.accepted = True
+                controller.channels[channel] = item
+            target = controller.read_loop
+        else:
+            controller = relay.MacPeer(frames)
+            controller.channels.update({1: blocked, 2: healthy})
+            target = controller.run
+        worker = threading.Thread(target=target, daemon=True)
+        worker.start()
+        try:
+            peer = relay.Frames(b.fileno(), b.fileno())
+            peer.send(relay.DATA, 1, b'x' * relay.MAX_FRAME)
+            peer.send(relay.DATA, 2, b'ok')
+            self.assertEqual(read_exact(receiver, 2), b'ok')
+            self.assertFalse(controller.closed.is_set())
+        finally:
+            controller.stop()
+            for connection in (a, b, blocked, unread, healthy, receiver):
+                relay.close_socket(connection)
+            worker.join(2)
+
+    def test_slow_client_does_not_block_other_channels(self):
+        self.verify_slow_channel_isolation('server')
+
+    def test_slow_fish_socket_does_not_block_other_channels(self):
+        self.verify_slow_channel_isolation('mac')
+
+    def test_final_bytes_are_drained_before_peer_close(self):
+        for side in ('server', 'mac'):
+            with self.subTest(side=side):
+                a, b = socket.socketpair()
+                target, receiver = socket.socketpair()
+                receiver.settimeout(3)
+                frames = relay.Frames(a.fileno(), a.fileno())
+                if side == 'server':
+                    controller = relay.Bridge(frames)
+                    item = relay.Channel(target)
+                    item.accepted = True
+                    controller.channels[1] = item
+                    run = controller.read_loop
+                else:
+                    controller = relay.MacPeer(frames)
+                    controller.channels[1] = target
+                    run = controller.run
+                worker = threading.Thread(target=run, daemon=True)
+                worker.start()
+                try:
+                    peer = relay.Frames(b.fileno(), b.fileno())
+                    payload = os.urandom(180000)
+                    for offset in range(0, len(payload), relay.MAX_FRAME):
+                        peer.send(relay.DATA, 1, payload[offset:offset + relay.MAX_FRAME])
+                    peer.send(relay.CLOSE, 1)
+                    self.assertEqual(read_exact(receiver, len(payload)), payload)
+                    self.assertEqual(receiver.recv(1), b'')
+                finally:
+                    controller.stop()
+                    for connection in (a, b, target, receiver):
+                        relay.close_socket(connection)
+                    worker.join(2)
 
     def test_connect_carries_binary_payload_without_changing_it(self):
         with Harness() as harness:

@@ -14,6 +14,7 @@ import json
 import logging
 from logging.handlers import RotatingFileHandler
 import os
+import queue
 from pathlib import Path
 import re
 import shlex
@@ -82,6 +83,61 @@ class Channel:
         self.connection = connection
         self.ready = threading.Event()
         self.accepted = False
+        self.sink = None
+
+
+class SocketSink:
+    """A bounded writer so a slow socket cannot block shared control frames."""
+    def __init__(self, connection, on_failure):
+        self.connection = connection
+        self.on_failure = on_failure
+        self.pending = queue.Queue(maxsize=16)
+        self.closed = threading.Event()
+        self.finishing = threading.Event()
+        self.start_lock = threading.Lock()
+        self.started = False
+
+    def start(self):
+        with self.start_lock:
+            if not self.started:
+                self.started = True
+                threading.Thread(target=self.run, daemon=True).start()
+
+    def push(self, payload):
+        if self.closed.is_set() or self.finishing.is_set():
+            return
+        try:
+            self.pending.put_nowait(payload)
+        except queue.Full:
+            self.stop()
+            self.on_failure()
+            return
+        self.start()
+
+    def finish(self):
+        self.finishing.set()
+        self.start()
+
+    def stop(self):
+        self.closed.set()
+        close_socket(self.connection)
+
+    def run(self):
+        try:
+            while not self.closed.is_set():
+                try:
+                    payload = self.pending.get(timeout=.25)
+                except queue.Empty:
+                    if self.finishing.is_set():
+                        return
+                    continue
+                self.connection.sendall(payload)
+                if self.finishing.is_set() and self.pending.empty():
+                    return
+        except OSError:
+            self.on_failure()
+        finally:
+            self.stop()
 
 
 class Bridge:
@@ -111,13 +167,19 @@ class Bridge:
             self.drop(channel, close=False)
             raise
 
-    def drop(self, channel, notify=True, close=True):
+    def drop(self, channel, notify=True, close=True, drain=False):
         with self.lock:
             item = self.channels.pop(channel, None)
         if item:
             item.ready.set()
             if close:
-                close_socket(item.connection)
+                if item.sink:
+                    if drain:
+                        item.sink.finish()
+                    else:
+                        item.sink.stop()
+                else:
+                    close_socket(item.connection)
             if notify:
                 with contextlib.suppress(OSError):
                     self.frames.send(CLOSE, channel)
@@ -147,12 +209,11 @@ class Bridge:
                 elif kind == FAILED:
                     item.ready.set()
                 elif kind == DATA and item.accepted:
-                    try:
-                        item.connection.sendall(payload)
-                    except OSError:
-                        self.drop(channel)
+                    if item.sink is None:
+                        item.sink = SocketSink(item.connection, lambda number=channel: self.drop(number))
+                    item.sink.push(payload)
                 elif kind == CLOSE:
-                    self.drop(channel, notify=False)
+                    self.drop(channel, notify=False, drain=True)
         except (OSError, EOFError, ValueError):
             pass
         finally:
@@ -227,15 +288,22 @@ class MacPeer:
         self.connector = connector
         self.on_ready = on_ready
         self.channels = {}
+        self.writers = {}
         self.pending = set()
         self.lock = threading.Lock()
         self.closed = threading.Event()
 
-    def drop(self, channel, notify=True):
+    def drop(self, channel, notify=True, drain=False):
         with self.lock:
             connection = self.channels.pop(channel, None)
+            writer = self.writers.pop(channel, None)
             self.pending.discard(channel)
-        if connection:
+        if writer:
+            if drain:
+                writer.finish()
+            else:
+                writer.stop()
+        elif connection:
             close_socket(connection)
         if notify:
             with contextlib.suppress(OSError):
@@ -293,13 +361,14 @@ class MacPeer:
                 elif kind == DATA:
                     with self.lock:
                         connection = self.channels.get(channel)
+                        writer = self.writers.get(channel)
+                        if connection and writer is None:
+                            writer = SocketSink(connection, lambda number=channel: self.drop(number))
+                            self.writers[channel] = writer
                     if connection:
-                        try:
-                            connection.sendall(payload)
-                        except OSError:
-                            self.drop(channel)
+                        writer.push(payload)
                 elif kind == CLOSE:
-                    self.drop(channel, notify=False)
+                    self.drop(channel, notify=False, drain=True)
         except (OSError, EOFError, ValueError):
             pass
         finally:
