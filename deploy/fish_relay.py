@@ -33,6 +33,7 @@ FISH_HOST = 'api.fish.audio'
 PORT = 18877
 MAX_FRAME = 65536
 MAX_CHANNELS = 16
+MAX_BUFFERED = 64 * 1024 * 1024  # per channel, bytes waiting for a slow socket
 OPEN, READY, DATA, CLOSE, FAILED, HELLO = range(1, 7)
 HEADER = struct.Struct('!BII')
 REMOTE_SCRIPT = '/opt/marketing-workbench/app/deploy/fish_relay.py'
@@ -91,7 +92,11 @@ class SocketSink:
     def __init__(self, connection, on_failure):
         self.connection = connection
         self.on_failure = on_failure
-        self.pending = queue.Queue(maxsize=16)
+        # Bound by bytes, not frame count: a whole TTS response (several MB) arrives faster
+        # than the workbench reads it. A 16-frame cap (~1 MB) cut audio mid-download.
+        self.pending = queue.Queue()
+        self.buffered = 0
+        self.size_lock = threading.Lock()
         self.closed = threading.Event()
         self.finishing = threading.Event()
         self.start_lock = threading.Lock()
@@ -106,12 +111,17 @@ class SocketSink:
     def push(self, payload):
         if self.closed.is_set() or self.finishing.is_set():
             return
-        try:
-            self.pending.put_nowait(payload)
-        except queue.Full:
+        with self.size_lock:
+            if self.buffered + len(payload) > MAX_BUFFERED:
+                overflow = True
+            else:
+                overflow = False
+                self.buffered += len(payload)
+        if overflow:
             self.stop()
             self.on_failure()
             return
+        self.pending.put_nowait(payload)
         self.start()
 
     def finish(self):
@@ -132,6 +142,8 @@ class SocketSink:
                         return
                     continue
                 self.connection.sendall(payload)
+                with self.size_lock:
+                    self.buffered -= len(payload)
                 if self.finishing.is_set() and self.pending.empty():
                     return
         except OSError:

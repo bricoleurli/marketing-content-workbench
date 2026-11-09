@@ -251,5 +251,29 @@ class FishRelayTest(unittest.TestCase):
                     relay.Frames(a.fileno(), a.fileno()).receive()
 
 
+
+class SlowReaderTests(unittest.TestCase):
+    def test_a_multi_megabyte_reply_reaches_a_slow_reader_intact(self):
+        import socket as _socket, time as _time
+        from deploy.fish_relay import SocketSink
+        ours, theirs = _socket.socketpair()
+        failures = []
+        sink = SocketSink(ours, lambda: failures.append(True))
+        body = bytes(range(256)) * (3 * 4096)  # 3 MiB, far above the old 16-frame cap
+        for start in range(0, len(body), 65536):
+            sink.push(body[start:start + 65536])
+        sink.finish()
+        received = bytearray()
+        theirs.settimeout(5)
+        while True:
+            _time.sleep(0.001)
+            data = theirs.recv(65536)
+            if not data:
+                break
+            received.extend(data)
+        theirs.close()
+        self.assertEqual(failures, [])
+        self.assertEqual(bytes(received), body)
+
 if __name__ == '__main__':
     unittest.main()
